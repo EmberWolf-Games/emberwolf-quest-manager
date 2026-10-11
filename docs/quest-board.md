@@ -9,7 +9,7 @@
 
 Generation combines a category's actions, quantities, targets, and reward table. The details and all provisional balancing values are in [quest-generation.md](quest-generation.md).
 
-GM only notes and draft data are stored in JournalEntry records inside a GM-owned archive folder. The `publishedQuests` world setting stores only published quest titles, public descriptions, safe category/urgency/reward fields, statuses, and vote-round identifiers. Private notes, generation metadata, and draft text stay in GM-owned journal records. The separate `partyRoster` setting stores the character IDs explicitly selected by the GM for generation.
+GM only notes and draft data are stored in JournalEntry records inside a GM-owned archive folder. The `publishedQuests` world setting stores only published quest titles, public descriptions, guild-clerk notes, safe category/urgency/reward fields, statuses, and vote-round identifiers. Private notes and generation metadata stay in GM-owned journal records. The separate `partyRoster` setting stores the character IDs explicitly selected by the GM for generation. The optional Gemini relay URL is stored in a client-scoped setting on the GM browser; see [Gemini guild-clerk notes](gemini-clerk-notes.md) for key handling and setup.
 
 ## Party vote
 
@@ -24,6 +24,7 @@ These rules are the initial implementation choice for a party-wide vote. Explici
 ## Current limits
 
 - Procedural generation creates reviewable drafts only; it does not publish or balance them as final game rules.
+- GM quest cards include a Delete action. The first click arms deletion for eight seconds; a second click on that quest permanently removes its archive record and public board entry.
 - Reward values are provisional. Deadlines, quest refresh, and automatic completion or failure are not included.
 - The handwritten appearance uses system cursive fonts when available and a browser cursive fallback. No external font service is required.
 - The vote result is limited to the board status. It does not create a dnd5e quest tracker entry or distribute rewards.

@@ -22,6 +22,7 @@ Examples such as `Collect 2d4 Silver Ore`, `Kill 2d6 Goblins`, and `Escort a nam
 - [Architecture boundaries](docs/architecture.md)
 - [Quest board behavior](docs/quest-board.md)
 - [Procedural generation and provisional balancing](docs/quest-generation.md)
+- [Optional Gemini guild-clerk notes](docs/gemini-clerk-notes.md)
 - [Versioning and releases](VERSIONING.md)
 - [Coding agent guidance](AGENTS.md)
 

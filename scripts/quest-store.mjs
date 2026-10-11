@@ -1,6 +1,7 @@
 const MODULE_ID = "emberwolf-quest-manager";
 const PUBLIC_QUESTS_SETTING = "publishedQuests";
 const PARTY_ROSTER_SETTING = "partyRoster";
+const GEMINI_RELAY_SETTING = "geminiRelayUrl";
 const PRIVATE_ARCHIVE_FLAG = "privateArchive";
 const PRIVATE_QUEST_FLAG = "questRecord";
 const QUEST_ID_FLAG = "questId";
@@ -27,6 +28,40 @@ export function registerQuestSettings() {
     type: String,
     default: "[]"
   });
+  game.settings.register(MODULE_ID, GEMINI_RELAY_SETTING, {
+    name: "Quest Board Gemini Relay URL",
+    hint: "GM-client relay endpoint used to draft guild-clerk notes. No API key is stored by the module.",
+    scope: "client",
+    config: false,
+    type: String,
+    default: ""
+  });
+}
+
+export function getGeminiRelayUrl() {
+  if (!game.user?.isGM) return "";
+  return String(game.settings.get(MODULE_ID, GEMINI_RELAY_SETTING) ?? "").trim();
+}
+
+export async function saveGeminiRelayUrl(value) {
+  requireGM();
+  const relayUrl = cleanText(value, 500);
+  if (relayUrl) {
+    let parsed;
+    try {
+      parsed = new URL(relayUrl);
+    } catch {
+      throw new Error("Enter a valid HTTPS relay URL, or a local HTTP URL such as http://127.0.0.1:30001/gemini/clerk-note.");
+    }
+    const localHosts = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+    if (!new Set(["https:", "http:"]).has(parsed.protocol)
+      || (parsed.protocol === "http:" && !localHosts.has(parsed.hostname))
+      || parsed.username || parsed.password || parsed.search || parsed.hash) {
+      throw new Error("Use HTTPS for a remote relay. HTTP is allowed only for a local relay, and relay URLs cannot contain credentials or query parameters.");
+    }
+  }
+  await game.settings.set(MODULE_ID, GEMINI_RELAY_SETTING, relayUrl);
+  return relayUrl;
 }
 
 export function getPartyRoster() {
@@ -133,6 +168,7 @@ export async function saveDraft(questId, fields) {
 
   const quests = await getPrivateQuests();
   const existing = quests.find(quest => quest.id === questId);
+  const clerkNote = cleanText(fields.clerkNote ?? existing?.clerkNote ?? "", 1200);
   const now = Date.now();
   const categoryId = cleanText(fields.categoryId || existing?.categoryId, 80);
   const categoryLabel = cleanText(fields.categoryLabel || existing?.categoryLabel, 80);
@@ -150,11 +186,12 @@ export async function saveDraft(questId, fields) {
     ? foundry.utils.deepClone(fields.generationMetadata)
     : existing?.generationMetadata ?? null;
   const record = existing
-    ? { ...existing, title, description, gmNotes, categoryId, categoryLabel, urgencyId, urgencyLabel, rewardCopper, generationMetadata, updatedAt: now }
+    ? { ...existing, title, description, clerkNote, gmNotes, categoryId, categoryLabel, urgencyId, urgencyLabel, rewardCopper, generationMetadata, updatedAt: now }
     : {
         id: foundry.utils.randomID(),
         title,
         description,
+        clerkNote,
         gmNotes,
         categoryId,
         categoryLabel,
@@ -195,6 +232,16 @@ export async function closeQuest(questId) {
   await persistPrivateQuest(record);
   await syncPublicQuests();
   return record;
+}
+
+export async function deleteQuest(questId) {
+  requireGM();
+  const entry = game.journal.contents.find(document =>
+    document.getFlag(MODULE_ID, QUEST_ID_FLAG) === questId
+  );
+  if (!entry) throw new Error("That quest could not be found in the GM archive.");
+  await entry.delete();
+  await syncPublicQuests();
 }
 
 export async function reopenQuest(questId) {
@@ -288,6 +335,7 @@ async function syncPublicQuests() {
       id: quest.id,
       title: quest.title,
       description: quest.description,
+      clerkNote: quest.clerkNote ?? "",
       categoryId: quest.categoryId ?? "",
       categoryLabel: quest.categoryLabel ?? "",
       urgencyId: quest.urgencyId ?? "",

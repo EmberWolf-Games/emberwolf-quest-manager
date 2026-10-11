@@ -115,6 +115,25 @@
   gap: 0.6rem;
 }
 
+.ewqm-ai-settings {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px dashed #80603a;
+  border-radius: 0.3rem;
+  background: rgb(255 241 205 / 5%);
+}
+
+.ewqm-ai-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #dfcda9;
+  font-size: 0.76rem;
+}
+
 .ewqm-roster {
   min-width: 0;
   margin: 0.7rem 0 0;
@@ -260,16 +279,18 @@
 .ewqm-quest-card {
   position: relative;
   overflow: hidden;
-  padding: 0.9rem 1rem 0.85rem;
-  border: 1px solid #956a37;
-  border-radius: 0.2rem 0.45rem 0.25rem 0.35rem;
+  padding: 1rem 1.05rem 0.9rem;
+  border: 1px solid #80552e;
+  border-radius: 0.65rem 0.22rem 0.48rem 0.3rem / 0.3rem 0.58rem 0.27rem 0.62rem;
   background-color: var(--ewqm-paper);
   background-image:
     radial-gradient(ellipse at 7% 10%, rgb(255 247 214 / 58%), transparent 35%),
     radial-gradient(ellipse at 93% 87%, rgb(163 112 49 / 19%), transparent 40%),
+    radial-gradient(circle at 91% 18%, rgb(111 69 37 / 11%) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 5% 81%, rgb(111 69 37 / 10%) 0 4px, transparent 5px),
     repeating-linear-gradient(3deg, rgb(123 87 43 / 3%) 0 1px, transparent 1px 5px),
     linear-gradient(127deg, var(--ewqm-paper-light), var(--ewqm-paper) 55%, #e6cd8d);
-  box-shadow: 0 3px 9px rgb(0 0 0 / 32%), inset 0 0 24px rgb(137 94 39 / 15%);
+  box-shadow: 0 4px 11px rgb(0 0 0 / 35%), inset 0 0 27px rgb(111 69 37 / 19%);
   color: var(--ewqm-ink);
 }
 
@@ -301,6 +322,41 @@
   text-transform: uppercase;
 }
 
+.ewqm-card-topline time {
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 0.77rem;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ewqm-card-crest {
+  position: relative;
+  display: grid;
+  height: 2.45rem;
+  margin: 0.22rem 0 0.3rem;
+  place-items: center;
+  color: #382719;
+  font-size: 1.7rem;
+  text-shadow: 0 1px 0 rgb(255 241 205 / 60%);
+}
+
+.ewqm-card-crest::before {
+  position: absolute;
+  top: 50%;
+  right: 0.15rem;
+  left: 0.15rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(73 48 28 / 58%) 18%, rgb(73 48 28 / 58%) 42%, transparent 46%, transparent 54%, rgb(73 48 28 / 58%) 58%, rgb(73 48 28 / 58%) 82%, transparent);
+  content: "";
+}
+
+.ewqm-card-crest i {
+  position: relative;
+  padding: 0 0.75rem;
+  background: #efdda6;
+}
+
 .ewqm-status-label {
   font-weight: 800;
 }
@@ -309,10 +365,29 @@
   position: relative;
   margin: 0.35rem 0 0.4rem;
   color: #392719;
-  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: 1.3rem;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 1.4rem;
   font-weight: 700;
   line-height: 1.25;
+}
+
+.ewqm-objective {
+  position: relative;
+  margin-top: 0.55rem;
+  padding: 0.48rem 0 0.62rem;
+  border-top: 1px solid rgb(90 62 32 / 45%);
+  border-bottom: 1px solid rgb(90 62 32 / 45%);
+}
+
+.ewqm-objective h4,
+.ewqm-clerk-note h4 {
+  margin: 0 0 0.2rem;
+  color: #49321f;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 0.89rem;
+  font-variant: small-caps;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .ewqm-description,
@@ -320,9 +395,9 @@
   position: relative;
   margin: 0;
   color: #3c2d20;
-  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 1rem;
+  line-height: 1.45;
   white-space: pre-wrap;
 }
 
@@ -341,6 +416,53 @@
   border: 1px solid rgb(90 62 32 / 30%);
   border-radius: 99px;
   background: rgb(255 247 214 / 40%);
+}
+
+.ewqm-clerk-note {
+  position: relative;
+  min-height: 5.1rem;
+  margin-top: 0.55rem;
+  padding: 0.5rem 4.1rem 0.62rem 0.15rem;
+  border-bottom: 1px solid rgb(90 62 32 / 35%);
+}
+
+.ewqm-clerk-note h4 {
+  margin-bottom: 0.12rem;
+}
+
+.ewqm-clerk-note p {
+  margin: 0;
+  color: #4b241b;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 0.98rem;
+  font-style: italic;
+  line-height: 1.48;
+  white-space: pre-wrap;
+}
+
+.ewqm-guild-seal {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.2rem;
+  display: grid;
+  width: 3.35rem;
+  height: 3.35rem;
+  place-items: center;
+  border: 3px double rgb(132 40 29 / 84%);
+  border-radius: 50%;
+  color: #8d3024;
+  font-size: 1.45rem;
+  opacity: 0.78;
+  transform: rotate(-9deg);
+  box-shadow: 0 0 0 0.2rem rgb(137 43 31 / 12%), inset 0 0 0 2px rgb(132 40 29 / 45%);
+}
+
+.ewqm-guild-seal::before {
+  position: absolute;
+  inset: 0.18rem;
+  border: 1px solid rgb(132 40 29 / 65%);
+  border-radius: 50%;
+  content: "";
 }
 
 .ewqm-party-vote,
@@ -382,6 +504,28 @@
   margin-top: 0.65rem;
   padding-top: 0.55rem;
   border-top: 1px dashed rgb(90 62 32 / 55%);
+}
+
+.ewqm-board button.ewqm-delete {
+  border-color: #7f211d;
+  background: #9a3028;
+  color: #fff4e6;
+  font-weight: 800;
+}
+
+.ewqm-board button.ewqm-delete:hover,
+.ewqm-board button.ewqm-delete:focus-visible {
+  border-color: #5e1714;
+  background: #b23b31;
+  outline-color: #c87963;
+}
+
+.ewqm-delete-confirmation {
+  position: relative;
+  margin: 0.45rem 0 0;
+  color: #72251f;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .ewqm-empty-state {

@@ -84,6 +84,21 @@
             </select>
           </label>
         </div>
+        <div class="ewqm-ai-settings">
+          <label class="ewqm-field">
+            <span>Gemini relay URL (optional)</span>
+            <input name="geminiRelayUrl" type="url" maxlength="500" value="{{geminiRelayUrl}}" placeholder="http://127.0.0.1:30001/gemini/clerk-note">
+          </label>
+          <div class="ewqm-ai-status">
+            {{#if hasGeminiRelay}}
+              <span>Relay URL saved for this GM browser.</span>
+            {{else}}
+              <span>No relay configured; drafts use built-in guild-clerk wording.</span>
+            {{/if}}
+            <button type="button" data-action="save-gemini-relay">Save relay URL</button>
+          </div>
+          <p class="ewqm-security-note">The module stores only this URL on the GM's browser. Keep your Gemini API key on a server-side relay; only the public title, category, urgency, objective, and reward are sent for note writing. GM notes and party details stay private.</p>
+        </div>
         <div class="ewqm-editor-actions">
           <button type="button" data-action="save-party-roster">Save roster</button>
           <button type="button" data-action="generate-quests" class="ewqm-primary">Generate drafts</button>
@@ -103,6 +118,10 @@
         <label class="ewqm-field">
           <span>Public posting</span>
           <textarea name="description" rows="3" maxlength="4000" required placeholder="What will the guild members read?">{{editingDescription}}</textarea>
+        </label>
+        <label class="ewqm-field">
+          <span>Additional details by guild clerk (player-visible)</span>
+          <textarea name="clerkNote" rows="3" maxlength="1200" placeholder="A handwritten-style note for the adventurers.">{{editingClerkNote}}</textarea>
         </label>
         <label class="ewqm-field ewqm-private-field">
           <span>GM only notes</span>
@@ -128,16 +147,28 @@
         <article class="ewqm-quest-card ewqm-status-{{quest.statusClass}}">
           <div class="ewqm-card-topline">
             <span class="ewqm-status-label">{{quest.statusLabel}}</span>
-            {{#if quest.createdLabel}}<time>{{quest.createdLabel}}</time>{{/if}}
+            {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
           </div>
+          <div class="ewqm-card-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></div>
           <h3>{{quest.title}}</h3>
-          <p class="ewqm-description">{{quest.description}}</p>
+          <section class="ewqm-objective">
+            <h4>Objective</h4>
+            <p class="ewqm-description">{{quest.description}}</p>
+          </section>
           {{#if quest.hasPublicDetails}}
             <p class="ewqm-quest-meta">
               {{#if quest.categoryLabel}}<span>{{quest.categoryLabel}}</span>{{/if}}
               {{#if quest.urgencyLabel}}<span>{{quest.urgencyLabel}}</span>{{/if}}
               {{#if quest.rewardLabel}}<span>Reward: {{quest.rewardLabel}}</span>{{/if}}
             </p>
+          {{/if}}
+
+          {{#if quest.hasClerkNote}}
+            <section class="ewqm-clerk-note" aria-label="Additional details by guild clerk">
+              <h4>Additional details by guild clerk</h4>
+              <p>{{quest.clerkNote}}</p>
+              <span class="ewqm-guild-seal" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+            </section>
           {{/if}}
 
           {{#if quest.hasGmNotes}}
@@ -174,7 +205,13 @@
               {{#if quest.canPublish}}<button type="button" data-action="publish-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Publish</button>{{/if}}
               {{#if quest.canClose}}<button type="button" data-action="close-quest" data-quest-id="{{quest.id}}" class="ewqm-danger">Close</button>{{/if}}
               {{#if quest.canReopen}}<button type="button" data-action="reopen-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Reopen vote</button>{{/if}}
+              {{#if quest.canDelete}}
+                <button type="button" data-action="delete-quest" data-quest-id="{{quest.id}}" class="ewqm-danger ewqm-delete" aria-pressed="{{quest.isDeleteArmed}}">
+                  {{#if quest.isDeleteArmed}}Confirm delete{{else}}Delete{{/if}}
+                </button>
+              {{/if}}
             </div>
+            {{#if quest.isDeleteArmed}}<p class="ewqm-delete-confirmation" role="status">Click “Confirm delete” within 8 seconds to permanently remove this quest.</p>{{/if}}
           {{/if}}
         </article>
       {{/each}}

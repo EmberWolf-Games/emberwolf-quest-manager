@@ -1,7 +1,9 @@
 import {
   castPartyVote,
   closeQuest,
+  deleteQuest,
   getEligibleVoters,
+  getGeminiRelayUrl,
   getPartyMembers,
   getPartyRoster,
   getPrivateQuest,
@@ -10,9 +12,11 @@ import {
   getVoteSummary,
   publishQuest,
   reopenQuest,
+  saveGeminiRelayUrl,
   saveDraft,
   savePartyRoster
 } from "./quest-store.mjs";
+import { makeFallbackClerkNote, requestClerkNote } from "./clerk-note.mjs";
 import { generateQuests } from "./quest-generator.mjs";
 import { CHALLENGE_OPTIONS, GENERATION_CATEGORIES, RULESET_OPTIONS, URGENCY_OPTIONS } from "./quest-pools.mjs";
 
@@ -45,12 +49,19 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       "edit-quest": this.#editQuest,
       "publish-quest": this.#publishQuest,
       "close-quest": this.#closeQuest,
+      "delete-quest": this.#deleteQuest,
       "reopen-quest": this.#reopenQuest,
       "cast-party-vote": this.#castPartyVote,
       "save-party-roster": this.#savePartyRoster,
+      "save-gemini-relay": this.#saveGeminiRelay,
       "generate-quests": this.#generateQuests
     }
   };
+
+  #armedDeleteQuestId = null;
+  #armedDeleteExpiresAt = 0;
+  #deleteResetTimer = null;
+  #deletingQuestId = null;
 
   static PARTS = {
     main: { template: "modules/" + MODULE_ID + "/templates/quest-board.hbs" }
@@ -92,7 +103,12 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       isEditing: Boolean(this.editingQuestId),
       editingTitle: editingQuest?.title ?? "",
       editingDescription: editingQuest?.description ?? "",
+      editingClerkNote: editingQuest
+        ? (editingQuest.clerkNote || makeFallbackClerkNote(editingQuest))
+        : "",
       editingGmNotes: editingQuest?.gmNotes ?? "",
+      geminiRelayUrl: getGeminiRelayUrl(),
+      hasGeminiRelay: Boolean(getGeminiRelayUrl()),
       quests
     };
   }
@@ -112,6 +128,8 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       id: quest.id,
       title: quest.title,
       description: quest.description,
+      clerkNote: quest.clerkNote || makeFallbackClerkNote(quest),
+      hasClerkNote: true,
       gmNotes: isGM ? quest.gmNotes : "",
       hasGmNotes: isGM && Boolean(quest.gmNotes),
       status: displayStatus,
@@ -138,6 +156,10 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       canReopen: isGM && ["accepted", "declined", "closed"].includes(quest.status),
       canPublish: isGM && quest.status === "draft",
       canEdit: isGM,
+      canDelete: isGM,
+      isDeleteArmed: isGM
+        && this.#armedDeleteQuestId === quest.id
+        && Date.now() <= this.#armedDeleteExpiresAt,
       categoryLabel: quest.categoryLabel ?? "",
       urgencyLabel: quest.urgencyLabel ?? "",
       hasPublicDetails: Boolean(quest.categoryLabel || quest.urgencyLabel || hasReward),
@@ -162,8 +184,29 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
     }
   }
 
-  static async #generateQuests(event) {
+  static async #saveGeminiRelay(event) {
     event.preventDefault();
+    try {
+      const form = this.element.querySelector("[data-generator-form]");
+      const relayUrl = await saveGeminiRelayUrl(new FormData(form).get("geminiRelayUrl"));
+      ui.notifications.info(relayUrl
+        ? "Gemini relay saved for this GM browser."
+        : "Gemini relay cleared; generated notes will use the local guild-clerk wording.");
+      await this.render();
+    } catch (error) {
+      console.error(MODULE_ID + " | Could not save the Gemini relay URL.", error);
+      ui.notifications.error(error.message ?? "Could not save the Gemini relay URL.");
+    }
+  }
+
+  static async #generateQuests(event, target) {
+    event.preventDefault();
+    const button = target;
+    const originalLabel = button?.textContent;
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Generating drafts…";
+    }
     try {
       const form = this.element.querySelector("[data-generator-form]");
       const fields = Object.fromEntries(new FormData(form).entries());
@@ -178,14 +221,45 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
         count: fields.count,
         party
       });
+      const relayUrl = getGeminiRelayUrl();
+      let fallbackCount = 0;
       const savedRecords = [];
-      for (const record of records) savedRecords.push(await saveDraft(null, record));
+      for (const record of records) {
+        if (relayUrl) {
+          try {
+            record.clerkNote = await requestClerkNote(record, relayUrl);
+          } catch {
+            record.clerkNote = makeFallbackClerkNote(record);
+            record.gmNotes = [
+              record.gmNotes,
+              "Guild-clerk note: Gemini relay unavailable; local wording was used. Check the GM browser's relay URL and the relay service."
+            ].filter(Boolean).join("\n\n");
+            fallbackCount += 1;
+            console.warn(MODULE_ID + " | Gemini relay failed for a draft; local clerk wording was used.");
+          }
+        } else {
+          record.clerkNote = makeFallbackClerkNote(record);
+        }
+        savedRecords.push(await saveDraft(null, record));
+      }
       this.editingQuestId = savedRecords.at(-1)?.id ?? null;
-      ui.notifications.info(savedRecords.length + " quest draft" + (savedRecords.length === 1 ? "" : "s") + " generated for GM review.");
+      const draftCount = savedRecords.length + " quest draft" + (savedRecords.length === 1 ? "" : "s");
+      if (relayUrl && fallbackCount) {
+        ui.notifications.warn(draftCount + " generated; " + fallbackCount + " used local clerk wording. See GM notes for the relay reminder.");
+      } else if (!relayUrl) {
+        ui.notifications.info(draftCount + " generated with local guild-clerk wording. Set a Gemini relay URL to use AI-written notes.");
+      } else {
+        ui.notifications.info(draftCount + " generated with Gemini guild-clerk notes.");
+      }
       await this.render();
     } catch (error) {
       console.error(MODULE_ID + " | Could not generate quests.", error);
       ui.notifications.error(error.message ?? "Could not generate quests.");
+    } finally {
+      if (button?.isConnected) {
+        button.disabled = false;
+        button.textContent = originalLabel;
+      }
     }
   }
 
@@ -244,6 +318,49 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
     } catch (error) {
       console.error(MODULE_ID + " | Could not close quest.", error);
       ui.notifications.error(error.message ?? "Could not close the quest.");
+    }
+  }
+
+  static async #deleteQuest(event, target) {
+    event.preventDefault();
+    if (!game.user?.isGM) {
+      ui.notifications.error("Only a Gamemaster can delete quests.");
+      return;
+    }
+    const questId = target.dataset.questId;
+    if (this.#deletingQuestId === questId) return;
+
+    if (this.#armedDeleteQuestId !== questId || Date.now() > this.#armedDeleteExpiresAt) {
+      this.#armedDeleteQuestId = questId;
+      this.#armedDeleteExpiresAt = Date.now() + 8000;
+      clearTimeout(this.#deleteResetTimer);
+      this.#deleteResetTimer = setTimeout(async () => {
+        if (this.#armedDeleteQuestId !== questId) return;
+        this.#armedDeleteQuestId = null;
+        this.#armedDeleteExpiresAt = 0;
+        if (this.rendered) await this.render();
+      }, 8000);
+      await this.render();
+      return;
+    }
+
+    this.#deletingQuestId = questId;
+    clearTimeout(this.#deleteResetTimer);
+    try {
+      await deleteQuest(questId);
+      if (this.editingQuestId === questId) this.editingQuestId = null;
+      this.#armedDeleteQuestId = null;
+      this.#armedDeleteExpiresAt = 0;
+      ui.notifications.info("Quest permanently deleted from the GM archive and party board.");
+      await this.render();
+    } catch (error) {
+      this.#armedDeleteQuestId = null;
+      this.#armedDeleteExpiresAt = 0;
+      console.error(MODULE_ID + " | Could not delete quest.", error);
+      ui.notifications.error(error.message ?? "Could not delete the quest.");
+      await this.render();
+    } finally {
+      this.#deletingQuestId = null;
     }
   }
 
