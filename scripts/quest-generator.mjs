@@ -12,6 +12,7 @@ const MINIMUM_LEVEL = 1;
 const MAXIMUM_LEVEL = 20;
 const MAXIMUM_BATCH_SIZE = 5;
 const COMBAT_CR_BAND = 2;
+let combatTargetsPromise;
 
 /**
  * Compose GM-reviewable quest records from one category's compatible pools.
@@ -99,31 +100,71 @@ function normalizeParty(party) {
 }
 
 async function getCombatTargets() {
+  if (combatTargetsPromise) return combatTargetsPromise;
+
+  combatTargetsPromise = loadCombatTargets();
+  try {
+    return await combatTargetsPromise;
+  } catch (error) {
+    combatTargetsPromise = undefined;
+    throw error;
+  }
+}
+
+async function loadCombatTargets() {
   const packId = QUEST_POOLS.combat.targetSource;
   const pack = game.packs.get(packId);
   if (!pack) {
     throw new Error("The dnd5e SRD monster compendium (" + packId + ") is unavailable in this world.");
   }
 
-  const index = await pack.getIndex({ fields: ["system.details.cr", "system.details.xp.value"] });
-  const targets = Array.from(index).map(entry => {
-    const cr = parseChallengeRating(foundry.utils.getProperty(entry, "system.details.cr"));
-    const xpValue = foundry.utils.getProperty(entry, "system.details.xp.value")
-      ?? foundry.utils.getProperty(entry, "system.details.xp");
-    const xp = Number(typeof xpValue === "object" ? xpValue?.value : xpValue);
-    return {
-      id: entry._id,
-      name: String(entry.name ?? "").trim(),
-      cr,
-      xp,
-      uuid: entry.uuid
-    };
-  }).filter(target => target.id && target.name && Number.isFinite(target.cr) && Number.isFinite(target.xp) && target.xp > 0);
+  let indexEntries = [];
+  let indexedTargets = [];
+  try {
+    const index = await pack.getIndex({ fields: ["system.details.cr", "system.details.xp.value"] });
+    indexEntries = Array.from(index ?? []);
+    indexedTargets = extractCombatTargets(indexEntries);
+    if (indexEntries.length && indexedTargets.length === indexEntries.length) return indexedTargets;
+  } catch (error) {
+    console.warn(
+      "EmberWolf Quest Manager | Could not read CR and XP from the dnd5e monster index; loading full monster documents.",
+      error
+    );
+  }
+
+  if (indexEntries.length !== indexedTargets.length) {
+    console.warn(
+      "EmberWolf Quest Manager | The dnd5e monster index exposed usable CR and XP for "
+        + indexedTargets.length + " of " + indexEntries.length + " entries; loading full monster documents."
+    );
+  }
+  const documentTargets = extractCombatTargets(await pack.getDocuments());
+  const targets = documentTargets.length ? documentTargets : indexedTargets;
 
   if (!targets.length) {
-    throw new Error("The dnd5e monster compendium did not provide indexed CR and XP values.");
+    throw new Error("The dnd5e monster compendium did not provide readable numeric CR and XP values.");
   }
   return targets;
+}
+
+function extractCombatTargets(entries) {
+  return Array.from(entries ?? []).map(entry => {
+    const cr = parseChallengeRating(readMonsterProperty(entry, "system.details.cr"));
+    const xpValue = readMonsterProperty(entry, "system.details.xp.value")
+      ?? readMonsterProperty(entry, "system.details.xp");
+    const xp = Number(typeof xpValue === "object" ? xpValue?.value : xpValue);
+    return {
+      id: entry?._id ?? entry?.id,
+      name: String(entry?.name ?? "").trim(),
+      cr,
+      xp,
+      uuid: entry?.uuid
+    };
+  }).filter(target => target.id && target.name && Number.isFinite(target.cr) && Number.isFinite(target.xp) && target.xp > 0);
+}
+
+function readMonsterProperty(entry, path) {
+  return foundry.utils.getProperty(entry, path) ?? entry?.[path];
 }
 
 function getCombatCandidates({ pool, combatTargets, members, partyLevel, difficulty, rulesetId }) {
@@ -193,6 +234,7 @@ function getPartyXpBudget(members, rulesetId, difficulty) {
 }
 
 function parseChallengeRating(value) {
+  if (value && typeof value === "object") value = value.value ?? value.rating ?? value.cr;
   if (typeof value === "number") return value;
   const normalized = String(value ?? "").trim();
   if (/^\d+(\.\d+)?$/.test(normalized)) return Number(normalized);
