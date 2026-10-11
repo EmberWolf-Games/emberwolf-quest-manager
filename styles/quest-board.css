@@ -85,7 +85,8 @@
 }
 
 .ewqm-field input,
-.ewqm-field textarea {
+.ewqm-field textarea,
+.ewqm-field select {
   width: 100%;
   border: 1px solid #876a48;
   border-radius: 0.25rem;
@@ -97,6 +98,72 @@
 
 .ewqm-field textarea {
   resize: vertical;
+}
+
+.ewqm-generator-intro,
+.ewqm-muted,
+.ewqm-roster-summary {
+  margin: 0.65rem 0 0;
+  color: #d5c19e;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.ewqm-generator-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+  gap: 0.6rem;
+}
+
+.ewqm-roster {
+  min-width: 0;
+  margin: 0.7rem 0 0;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border: 1px solid #765a3b;
+  border-radius: 0.3rem;
+}
+
+.ewqm-roster legend {
+  padding: 0 0.3rem;
+  color: #efd9a8;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ewqm-roster-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 0.3rem 0.65rem;
+}
+
+.ewqm-roster-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  color: #ead9b9;
+  font-size: 0.8rem;
+}
+
+.ewqm-roster-option input {
+  margin: 0;
+  accent-color: #d6b36f;
+}
+
+.ewqm-roster-option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ewqm-roster-option small {
+  color: #c8b394;
+  font-size: 0.72rem;
+}
+
+.ewqm-roster-option.is-disabled {
+  opacity: 0.6;
 }
 
 .ewqm-private-field span::after {
@@ -257,6 +324,23 @@
   font-size: 0.95rem;
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+.ewqm-quest-meta {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.55rem 0 0;
+  color: #654a2f;
+  font-size: 0.72rem;
+}
+
+.ewqm-quest-meta span {
+  padding: 0.16rem 0.4rem;
+  border: 1px solid rgb(90 62 32 / 30%);
+  border-radius: 99px;
+  background: rgb(255 247 214 / 40%);
 }
 
 .ewqm-party-vote,

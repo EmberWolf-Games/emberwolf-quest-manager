@@ -12,6 +12,86 @@
   </header>
 
   {{#if isGM}}
+    <details class="ewqm-editor ewqm-generator" open>
+      <summary>Generate quest drafts</summary>
+      <p class="ewqm-generator-intro">Choose the party roster and generation settings. Each draft combines compatible category pools for an action, quantity, target, and payout. Generated quests are saved privately for your review; publishing is a separate step.</p>
+      <form data-generator-form autocomplete="off">
+        <fieldset class="ewqm-roster">
+          <legend>Party roster</legend>
+          {{#if hasCharacterActors}}
+            <div class="ewqm-roster-list">
+              {{#each partyRoster as |actor|}}
+                <label class="ewqm-roster-option {{#unless actor.isSelectable}}is-disabled{{/unless}}">
+                  <input type="checkbox" name="actorIds" value="{{actor.id}}" {{#if actor.isSelected}}checked{{/if}} {{#unless actor.isSelectable}}disabled{{/unless}}>
+                  <span>{{actor.name}}</span>
+                  <small>{{actor.levelLabel}}</small>
+                </label>
+              {{/each}}
+            </div>
+          {{else}}
+            <p class="ewqm-muted">No character actors with a usable dnd5e level are available in this world.</p>
+          {{/if}}
+          <p class="ewqm-roster-summary">
+            {{#if hasPartyRoster}}
+              {{partyRosterCount}} selected character(s); party level {{partyLevel}} (average rounded down).
+            {{else}}
+              Select the player characters who count as the party. No world actors are added automatically.
+            {{/if}}
+          </p>
+        </fieldset>
+
+        <div class="ewqm-generator-fields">
+          <label class="ewqm-field">
+            <span>Quest category</span>
+            <select name="categoryId">
+              {{#each generationCategories as |category|}}
+                <option value="{{category.id}}">{{category.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <label class="ewqm-field">
+            <span>Challenge</span>
+            <select name="difficultyId">
+              {{#each challengeOptions as |option|}}
+                <option value="{{option.id}}" {{#if option.isDefault}}selected{{/if}}>{{option.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <label class="ewqm-field">
+            <span>Urgency</span>
+            <select name="urgencyId">
+              {{#each urgencyOptions as |option|}}
+                <option value="{{option.id}}">{{option.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <label class="ewqm-field">
+            <span>Encounter budget</span>
+            <select name="rulesetId">
+              {{#each rulesetOptions as |option|}}
+                <option value="{{option.id}}">{{option.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <label class="ewqm-field">
+            <span>Drafts to generate</span>
+            <select name="count">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+        </div>
+        <div class="ewqm-editor-actions">
+          <button type="button" data-action="save-party-roster">Save roster</button>
+          <button type="button" data-action="generate-quests" class="ewqm-primary">Generate drafts</button>
+        </div>
+      </form>
+      <p class="ewqm-security-note">The party level is the floor of the selected characters' average levels. Reward tables and urgency multipliers are starter balancing values. Combat estimates are not a guarantee of encounter safety.</p>
+    </details>
+
     <details class="ewqm-editor" open>
       <summary>{{#if isEditing}}Edit a commission{{else}}Write a new commission{{/if}}</summary>
       <form data-quest-form autocomplete="off">
@@ -52,6 +132,13 @@
           </div>
           <h3>{{quest.title}}</h3>
           <p class="ewqm-description">{{quest.description}}</p>
+          {{#if quest.hasPublicDetails}}
+            <p class="ewqm-quest-meta">
+              {{#if quest.categoryLabel}}<span>{{quest.categoryLabel}}</span>{{/if}}
+              {{#if quest.urgencyLabel}}<span>{{quest.urgencyLabel}}</span>{{/if}}
+              {{#if quest.rewardLabel}}<span>Reward: {{quest.rewardLabel}}</span>{{/if}}
+            </p>
+          {{/if}}
 
           {{#if quest.hasGmNotes}}
             <aside class="ewqm-gm-notes">

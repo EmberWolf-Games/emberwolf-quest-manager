@@ -37,7 +37,7 @@ Hooks.once("init", () => {
     });
 
     Hooks.on("updateSetting", setting => {
-      if (setting.key === MODULE_ID + ".publishedQuests") refreshQuestBoard();
+      if ([MODULE_ID + ".publishedQuests", MODULE_ID + ".partyRoster"].includes(setting.key)) refreshQuestBoard();
     });
 
     queueVoteResolution();

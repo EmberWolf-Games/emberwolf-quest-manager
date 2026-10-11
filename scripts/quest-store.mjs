@@ -1,5 +1,6 @@
 const MODULE_ID = "emberwolf-quest-manager";
 const PUBLIC_QUESTS_SETTING = "publishedQuests";
+const PARTY_ROSTER_SETTING = "partyRoster";
 const PRIVATE_ARCHIVE_FLAG = "privateArchive";
 const PRIVATE_QUEST_FLAG = "questRecord";
 const QUEST_ID_FLAG = "questId";
@@ -18,6 +19,59 @@ export function registerQuestSettings() {
     type: String,
     default: "[]"
   });
+  game.settings.register(MODULE_ID, PARTY_ROSTER_SETTING, {
+    name: "Quest Generator Party Roster",
+    hint: "World character IDs explicitly selected by a Gamemaster for party-level quest generation.",
+    scope: "world",
+    config: false,
+    type: String,
+    default: "[]"
+  });
+}
+
+export function getPartyRoster() {
+  const selectedIds = new Set(readPartyRosterIds());
+  return game.actors.contents
+    .filter(actor => actor.type === "character")
+    .map(actor => {
+      const level = getCharacterLevel(actor);
+      return {
+        id: actor.id,
+        name: actor.name,
+        level,
+        levelLabel: level ? "Level " + level : "Level unavailable",
+        isSelected: selectedIds.has(actor.id),
+        isSelectable: Number.isInteger(level) && level >= 1 && level <= 20
+      };
+    })
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export async function getPartyMembers() {
+  const actors = new Map(game.actors.contents.map(actor => [actor.id, actor]));
+  return readPartyRosterIds().map(id => actors.get(id)).filter(actor => actor?.type === "character")
+    .map(actor => ({ id: actor.id, name: actor.name, level: getCharacterLevel(actor) }))
+    .filter(member => Number.isInteger(member.level) && member.level >= 1 && member.level <= 20);
+}
+
+export async function savePartyRoster(actorIds) {
+  requireGM();
+  const requestedIds = [...new Set((Array.isArray(actorIds) ? actorIds : []).map(id => String(id)))];
+  const actors = new Map(game.actors.contents.map(actor => [actor.id, actor]));
+  const validIds = [];
+  for (const id of requestedIds) {
+    const actor = actors.get(id);
+    if (!actor || actor.type !== "character") {
+      throw new Error("The party roster can include only character actors in this world.");
+    }
+    const level = getCharacterLevel(actor);
+    if (!Number.isInteger(level) || level < 1 || level > 20) {
+      throw new Error(actor.name + " does not have a usable dnd5e character level.");
+    }
+    validIds.push(id);
+  }
+  await game.settings.set(MODULE_ID, PARTY_ROSTER_SETTING, JSON.stringify(validIds));
+  return getPartyMembers();
 }
 
 export function getPublishedQuests() {
@@ -80,13 +134,34 @@ export async function saveDraft(questId, fields) {
   const quests = await getPrivateQuests();
   const existing = quests.find(quest => quest.id === questId);
   const now = Date.now();
+  const categoryId = cleanText(fields.categoryId || existing?.categoryId, 80);
+  const categoryLabel = cleanText(fields.categoryLabel || existing?.categoryLabel, 80);
+  const urgencyId = cleanText(fields.urgencyId || existing?.urgencyId, 40);
+  const urgencyLabel = cleanText(fields.urgencyLabel || existing?.urgencyLabel, 40);
+  const rewardCandidate = fields.rewardCopper ?? existing?.rewardCopper;
+  const rewardCopper = rewardCandidate !== null
+    && rewardCandidate !== undefined
+    && rewardCandidate !== ""
+    && Number.isFinite(Number(rewardCandidate))
+    && Number(rewardCandidate) >= 0
+    ? Math.round(Number(rewardCandidate))
+    : null;
+  const generationMetadata = fields.generationMetadata
+    ? foundry.utils.deepClone(fields.generationMetadata)
+    : existing?.generationMetadata ?? null;
   const record = existing
-    ? { ...existing, title, description, gmNotes, updatedAt: now }
+    ? { ...existing, title, description, gmNotes, categoryId, categoryLabel, urgencyId, urgencyLabel, rewardCopper, generationMetadata, updatedAt: now }
     : {
         id: foundry.utils.randomID(),
         title,
         description,
         gmNotes,
+        categoryId,
+        categoryLabel,
+        urgencyId,
+        urgencyLabel,
+        rewardCopper,
+        generationMetadata,
         status: "draft",
         voteRoundId: null,
         createdAt: now,
@@ -213,6 +288,13 @@ async function syncPublicQuests() {
       id: quest.id,
       title: quest.title,
       description: quest.description,
+      categoryId: quest.categoryId ?? "",
+      categoryLabel: quest.categoryLabel ?? "",
+      urgencyId: quest.urgencyId ?? "",
+      urgencyLabel: quest.urgencyLabel ?? "",
+      rewardCopper: quest.rewardCopper !== null && quest.rewardCopper !== undefined && Number.isFinite(Number(quest.rewardCopper))
+        ? Number(quest.rewardCopper)
+        : null,
       status: quest.status,
       voteRoundId: quest.voteRoundId,
       createdAt: quest.createdAt,
@@ -227,4 +309,28 @@ function requireGM() {
 
 function cleanText(value, maximumLength) {
   return String(value ?? "").trim().slice(0, maximumLength);
+}
+
+function readPartyRosterIds() {
+  try {
+    const stored = game.settings.get(MODULE_ID, PARTY_ROSTER_SETTING);
+    const parsed = JSON.parse(stored || "[]");
+    return Array.isArray(parsed) ? [...new Set(parsed.map(id => String(id)))] : [];
+  } catch (error) {
+    console.error(MODULE_ID + " | Party roster data is not valid JSON.", error);
+    return [];
+  }
+}
+
+function getCharacterLevel(actor) {
+  let rollLevel;
+  try {
+    rollLevel = Number(actor.getRollData?.()?.details?.level);
+  } catch (error) {
+    console.debug(MODULE_ID + " | Could not read dnd5e roll-data character level for " + actor.name + ".", error);
+  }
+  const level = Number.isInteger(rollLevel) && rollLevel > 0
+    ? rollLevel
+    : Number(actor.system?.details?.level);
+  return Number.isInteger(level) ? level : null;
 }

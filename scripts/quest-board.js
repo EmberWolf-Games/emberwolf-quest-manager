@@ -2,14 +2,19 @@ import {
   castPartyVote,
   closeQuest,
   getEligibleVoters,
+  getPartyMembers,
+  getPartyRoster,
   getPrivateQuest,
   getPrivateQuests,
   getPublishedQuests,
   getVoteSummary,
   publishQuest,
   reopenQuest,
-  saveDraft
+  saveDraft,
+  savePartyRoster
 } from "./quest-store.mjs";
+import { generateQuests } from "./quest-generator.mjs";
+import { CHALLENGE_OPTIONS, GENERATION_CATEGORIES, RULESET_OPTIONS, URGENCY_OPTIONS } from "./quest-pools.mjs";
 
 const MODULE_ID = "emberwolf-quest-manager";
 const PLAYER_VOTES_FLAG = "questVotes";
@@ -41,7 +46,9 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       "publish-quest": this.#publishQuest,
       "close-quest": this.#closeQuest,
       "reopen-quest": this.#reopenQuest,
-      "cast-party-vote": this.#castPartyVote
+      "cast-party-vote": this.#castPartyVote,
+      "save-party-roster": this.#savePartyRoster,
+      "generate-quests": this.#generateQuests
     }
   };
 
@@ -53,6 +60,11 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
     const isGM = game.user.isGM;
     const sourceQuests = isGM ? await getPrivateQuests() : getPublishedQuests();
     const eligibleVoters = getEligibleVoters();
+    const partyRoster = isGM ? getPartyRoster() : [];
+    const partyMembers = isGM ? await getPartyMembers() : [];
+    const partyLevel = partyMembers.length
+      ? Math.floor(partyMembers.reduce((sum, member) => sum + member.level, 0) / partyMembers.length)
+      : null;
     const editingQuest = isGM && this.editingQuestId
       ? sourceQuests.find(quest => quest.id === this.editingQuestId)
       : null;
@@ -67,6 +79,15 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       hasQuests: quests.length > 0,
       hasPlayerUsers: eligibleVoters.length > 0,
       playerCount: eligibleVoters.length,
+      partyRoster,
+      hasPartyRoster: partyMembers.length > 0,
+      partyRosterCount: partyMembers.length,
+      partyLevel,
+      hasCharacterActors: partyRoster.some(actor => actor.isSelectable),
+      generationCategories: [{ id: "", label: "Any category" }, ...GENERATION_CATEGORIES],
+      challengeOptions: CHALLENGE_OPTIONS.map(option => ({ ...option, isDefault: option.id === "standard" })),
+      urgencyOptions: URGENCY_OPTIONS,
+      rulesetOptions: RULESET_OPTIONS,
       editingQuestId: this.editingQuestId ?? "",
       isEditing: Boolean(this.editingQuestId),
       editingTitle: editingQuest?.title ?? "",
@@ -83,6 +104,9 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
     const myVotes = game.user.getFlag(MODULE_ID, PLAYER_VOTES_FLAG) ?? {};
     const myVote = myVotes[quest.voteRoundId] ?? "";
     const isAvailable = displayStatus === "available";
+    const hasReward = quest.rewardCopper !== null
+      && quest.rewardCopper !== undefined
+      && Number.isFinite(Number(quest.rewardCopper));
 
     return {
       id: quest.id,
@@ -113,8 +137,56 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       canClose: isGM && PUBLIC_STATUSES.has(quest.status),
       canReopen: isGM && ["accepted", "declined", "closed"].includes(quest.status),
       canPublish: isGM && quest.status === "draft",
-      canEdit: isGM
+      canEdit: isGM,
+      categoryLabel: quest.categoryLabel ?? "",
+      urgencyLabel: quest.urgencyLabel ?? "",
+      hasPublicDetails: Boolean(quest.categoryLabel || quest.urgencyLabel || hasReward),
+      rewardLabel: hasReward ? formatCurrency(Number(quest.rewardCopper)) : ""
     };
+  }
+
+  static async #savePartyRoster(event) {
+    event.preventDefault();
+    try {
+      const form = this.element.querySelector("[data-generator-form]");
+      const selectedActorIds = [...form.querySelectorAll('[name="actorIds"]:checked')].map(input => input.value);
+      const party = await savePartyRoster(selectedActorIds);
+      const level = party.length
+        ? Math.floor(party.reduce((sum, member) => sum + member.level, 0) / party.length)
+        : null;
+      ui.notifications.info(level ? "Party roster saved. Average party level: " + level + "." : "Party roster cleared.");
+      await this.render();
+    } catch (error) {
+      console.error(MODULE_ID + " | Could not save party roster.", error);
+      ui.notifications.error(error.message ?? "Could not save the party roster.");
+    }
+  }
+
+  static async #generateQuests(event) {
+    event.preventDefault();
+    try {
+      const form = this.element.querySelector("[data-generator-form]");
+      const fields = Object.fromEntries(new FormData(form).entries());
+      const selectedActorIds = [...form.querySelectorAll('[name="actorIds"]:checked')].map(input => input.value);
+      await savePartyRoster(selectedActorIds);
+      const party = await getPartyMembers();
+      const records = await generateQuests({
+        categoryId: fields.categoryId,
+        difficultyId: fields.difficultyId,
+        urgencyId: fields.urgencyId,
+        rulesetId: fields.rulesetId,
+        count: fields.count,
+        party
+      });
+      const savedRecords = [];
+      for (const record of records) savedRecords.push(await saveDraft(null, record));
+      this.editingQuestId = savedRecords.at(-1)?.id ?? null;
+      ui.notifications.info(savedRecords.length + " quest draft" + (savedRecords.length === 1 ? "" : "s") + " generated for GM review.");
+      await this.render();
+    } catch (error) {
+      console.error(MODULE_ID + " | Could not generate quests.", error);
+      ui.notifications.error(error.message ?? "Could not generate quests.");
+    }
   }
 
   static async #saveQuest(event) {
@@ -215,4 +287,16 @@ export function refreshQuestBoard() {
 function formatDate(timestamp) {
   if (!timestamp) return "";
   return new Date(timestamp).toLocaleDateString();
+}
+
+function formatCurrency(copper) {
+  const value = Math.max(0, Math.trunc(copper));
+  const gold = Math.floor(value / 100);
+  const silver = Math.floor((value % 100) / 10);
+  const remainingCopper = value % 10;
+  return [
+    gold ? gold + " GP" : "",
+    silver ? silver + " SP" : "",
+    remainingCopper ? remainingCopper + " CP" : ""
+  ].filter(Boolean).join(", ") || "0 CP";
 }

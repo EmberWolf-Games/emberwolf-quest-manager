@@ -13,12 +13,15 @@ Combine entries from expandable data pools rather than selecting only prewritten
 - Select dependent pools based on the action; disallow nonsensical combinations.
 - Example results: `Collect 2d4 Silver Ore`, `Kill 2d6 Goblins`, `Escort [actorname] to [locationname]`.
 
+The first implementation uses category-owned action, quantity, target, and reward arrays. The GM selects the roster explicitly. Combat is filtered by an approximate ±2 CR band and an XP-budget estimate; noncombat targets use a separate comparative danger rank. Generated quests are saved as GM-only drafts for review. The implementation and its provisional values are described in [docs/quest-generation.md](docs/quest-generation.md).
+
 ## Party level and feasible CR
 Compute:
 `partyLevel = Math.floor(sum(characterLevels) / partyCharacterCount)`.
 - Explicitly define party membership; never include arbitrary world actors automatically.
+- Current implementation: Gamemasters choose character actors in a world-level roster; only selected characters count.
 - Refuse generation if party roster is empty.
-- Permit quests roughly one or two CR ranks above/below the party level, limited to valid CR entries, including fractional CR where needed.
+- Permit combat quests roughly one or two CR ranks above/below the party level, limited to valid CR entries, including fractional CR where needed, and estimate feasibility using quantity and XP budget.
 - Creature CR is **not** equivalent to encounter difficulty. Check group size, encounter composition, action economy, and objective quantity.
 - For gathering, escort, location and other noncombat quests, assign a comparable danger/difficulty assessment without inventing monster CR for inanimate objects.
 - Always enforce feasibility limits; allow difficult quests with elevated risk and reward.
@@ -27,7 +30,7 @@ Compute:
 - Scale rewards to actual difficulty, risk, objective complexity, and urgency.
 - Represent payments in **CP, SP, GP**; 1 GP = 10 SP = 100 CP.
 - Calculate in copper-equivalent value and convert to display denominations.
-- Reward scales and rounding policy must be configurable/testable.
+- Reward scales and rounding policy must be configurable/testable. Current payout tables, multipliers, and 5 CP rounding are provisional balancing defaults, not final economy rules.
 
 ## Urgency classes
 Urgency remains separate from difficulty:
@@ -51,10 +54,10 @@ These multipliers are starting design assumptions; refine via balancing. Higher 
 - Drafts and GM-only notes are stored in GM-owned JournalEntry records. The shared setting contains only safe public fields for published quests.
 - Each published quest has an independent party-wide Accept or Decline ballot. Every Player or Trusted world user gets one changeable vote; Assistant Gamemasters and Gamemasters do not vote.
 - A strict majority of all Player or Trusted world users resolves a ballot. Ties and incomplete votes remain open. Closing and reopening a quest starts a fresh ballot.
-- This voter group is an initial implementation choice. Explicit party roster selection and one ballot that selects among several quests remain open questions.
+- This voter group is an initial implementation choice. Explicit roster UI and use of dnd5e's total character level are also implementation choices and should be checked against the active system build. Whether a ballot should select among multiple simultaneous commissions remains open.
 
 ## Open design questions (do not assume answers)
-- Party roster selection and multiclass level handling.
+- Multiclass total-level behavior should be confirmed against the active dnd5e build.
 - Rank nomenclature and mapping to CR/party level.
 - Data sources for enemies, NPCs, resources, and destinations.
 - Quest-count and refresh schedule.
