@@ -9,7 +9,7 @@
 
 Generation combines a category's actions, quantities, targets, and reward table. The details and all provisional balancing values are in [quest-generation.md](quest-generation.md).
 
-GM only notes and draft data are stored in JournalEntry records inside a GM-owned archive folder. The shared world setting stores only published quest titles, public descriptions, safe category/urgency/reward fields, statuses, and vote-round identifiers. It never stores private notes, generation metadata, selected party roster, or draft text.
+GM only notes and draft data are stored in JournalEntry records inside a GM-owned archive folder. The `publishedQuests` world setting stores only published quest titles, public descriptions, safe category/urgency/reward fields, statuses, and vote-round identifiers. Private notes, generation metadata, and draft text stay in GM-owned journal records. The separate `partyRoster` setting stores the character IDs explicitly selected by the GM for generation.
 
 ## Party vote
 
