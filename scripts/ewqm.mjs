@@ -12,6 +12,7 @@ function queueVoteResolution() {
 }
 
 Hooks.once("init", () => {
+  ensureStylesheet();
   registerQuestSettings();
 
   Hooks.on("getSceneControlButtons", controls => {
@@ -44,3 +45,16 @@ Hooks.once("init", () => {
 });
 
 console.info(MODULE_ID + " | Quest board module loaded.");
+
+function ensureStylesheet() {
+  const href = new URL("../styles/quest-board.css", import.meta.url).href;
+  const alreadyLoaded = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    .some(link => link.href === href);
+  if (alreadyLoaded) return;
+
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = href;
+  stylesheet.dataset.ewqmStylesheet = "true";
+  document.head.append(stylesheet);
+}
