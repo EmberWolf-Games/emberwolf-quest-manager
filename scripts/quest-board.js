@@ -222,23 +222,24 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
         party
       });
       const relayUrl = getGeminiRelayUrl();
-      let fallbackCount = 0;
+      const clerkResults = await Promise.all(records.map(async record => {
+        if (!relayUrl) return { note: makeFallbackClerkNote(record), usedFallback: false };
+        try {
+          return { note: await requestClerkNote(record, relayUrl), usedFallback: false };
+        } catch {
+          return { note: makeFallbackClerkNote(record), usedFallback: true };
+        }
+      }));
+      const fallbackCount = clerkResults.filter(result => result.usedFallback).length;
       const savedRecords = [];
-      for (const record of records) {
-        if (relayUrl) {
-          try {
-            record.clerkNote = await requestClerkNote(record, relayUrl);
-          } catch {
-            record.clerkNote = makeFallbackClerkNote(record);
-            record.gmNotes = [
-              record.gmNotes,
-              "Guild-clerk note: Gemini relay unavailable; local wording was used. Check the GM browser's relay URL and the relay service."
-            ].filter(Boolean).join("\n\n");
-            fallbackCount += 1;
-            console.warn(MODULE_ID + " | Gemini relay failed for a draft; local clerk wording was used.");
-          }
-        } else {
-          record.clerkNote = makeFallbackClerkNote(record);
+      for (const [index, record] of records.entries()) {
+        record.clerkNote = clerkResults[index].note;
+        if (clerkResults[index].usedFallback) {
+          record.gmNotes = [
+            record.gmNotes,
+            "Guild-clerk note: Gemini relay unavailable; local wording was used. Check the GM browser's relay URL and the relay service."
+          ].filter(Boolean).join("\n\n");
+          console.warn(MODULE_ID + " | Gemini relay failed for a draft; local clerk wording was used.");
         }
         savedRecords.push(await saveDraft(null, record));
       }
