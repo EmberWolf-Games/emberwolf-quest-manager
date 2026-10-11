@@ -1,0 +1,323 @@
+.ewqm-quest-board-window .window-content {
+  padding: 0;
+  overflow: hidden;
+  background: #30271f;
+}
+
+.ewqm-board {
+  --ewqm-ink: #34251a;
+  --ewqm-muted-ink: #68513a;
+  --ewqm-paper: #f1dfa9;
+  --ewqm-paper-light: #fff0c2;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  height: 100%;
+  overflow: auto;
+  padding: 1rem 1.1rem 1.4rem;
+  color: #f6ead4;
+  font-family: var(--font-primary, Georgia, serif);
+}
+
+.ewqm-board *,
+.ewqm-board *::before,
+.ewqm-board *::after {
+  box-sizing: border-box;
+}
+
+.ewqm-masthead {
+  position: relative;
+  padding: 0.8rem 1rem 0.9rem;
+  border: 1px solid #80603a;
+  border-radius: 0.45rem;
+  background: linear-gradient(135deg, #493421, #2d2119 72%);
+  text-align: center;
+}
+
+.ewqm-guild-name {
+  margin: 0 0 0.25rem;
+  color: #d7b677;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ewqm-masthead h1 {
+  margin: 0;
+  color: #f3dfb3;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.ewqm-intro {
+  margin: 0.35rem 0 0;
+  color: #dfcfb1;
+  font-size: 0.9rem;
+}
+
+.ewqm-editor {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #826440;
+  border-radius: 0.35rem;
+  background: #3a2a20;
+}
+
+.ewqm-editor > summary {
+  color: #f0d9a8;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ewqm-editor form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+}
+
+.ewqm-field {
+  display: grid;
+  gap: 0.3rem;
+  color: #ead9b9;
+  font-size: 0.84rem;
+}
+
+.ewqm-field input,
+.ewqm-field textarea {
+  width: 100%;
+  border: 1px solid #876a48;
+  border-radius: 0.25rem;
+  padding: 0.48rem 0.55rem;
+  background: #f7edda;
+  color: #2e241c;
+  font: inherit;
+}
+
+.ewqm-field textarea {
+  resize: vertical;
+}
+
+.ewqm-private-field span::after {
+  content: " (never shown to players)";
+  color: #d4ae74;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.ewqm-editor-actions,
+.ewqm-card-actions,
+.ewqm-vote-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ewqm-board button {
+  min-height: 2rem;
+  border: 1px solid #9c7a4d;
+  border-radius: 0.25rem;
+  padding: 0.38rem 0.72rem;
+  background: #efe0bd;
+  color: #332419;
+  cursor: pointer;
+  font: 600 0.84rem var(--font-primary, Georgia, serif);
+}
+
+.ewqm-board button:hover,
+.ewqm-board button:focus-visible {
+  border-color: #e3bf79;
+  background: #fff0cb;
+  outline: 2px solid #e3bf79;
+  outline-offset: 1px;
+}
+
+.ewqm-board button.ewqm-primary {
+  border-color: #6e4826;
+  background: #8c5a2e;
+  color: #fff3d8;
+}
+
+.ewqm-board button.ewqm-danger,
+.ewqm-board button.ewqm-decline {
+  border-color: #824b37;
+  background: #6e3c2e;
+  color: #fff0dc;
+}
+
+.ewqm-board button.ewqm-accept {
+  border-color: #50613b;
+  background: #53633c;
+  color: #fff6df;
+}
+
+.ewqm-board button.is-selected {
+  box-shadow: 0 0 0 2px #e7c47b inset;
+  font-weight: 800;
+}
+
+.ewqm-security-note {
+  margin: 0.6rem 0 0;
+  color: #c8b394;
+  font-size: 0.74rem;
+}
+
+.ewqm-board-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 0.2rem;
+  border-bottom: 1px solid #6c5134;
+}
+
+.ewqm-board-heading h2 {
+  margin: 0 0 0.4rem;
+  color: #efd6a2;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 1.25rem;
+}
+
+.ewqm-board-heading span {
+  color: #cab693;
+  font-size: 0.78rem;
+}
+
+.ewqm-quest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
+  gap: 0.85rem;
+}
+
+.ewqm-quest-card {
+  position: relative;
+  overflow: hidden;
+  padding: 0.9rem 1rem 0.85rem;
+  border: 1px solid #956a37;
+  border-radius: 0.2rem 0.45rem 0.25rem 0.35rem;
+  background-color: var(--ewqm-paper);
+  background-image:
+    radial-gradient(ellipse at 7% 10%, rgb(255 247 214 / 58%), transparent 35%),
+    radial-gradient(ellipse at 93% 87%, rgb(163 112 49 / 19%), transparent 40%),
+    repeating-linear-gradient(3deg, rgb(123 87 43 / 3%) 0 1px, transparent 1px 5px),
+    linear-gradient(127deg, var(--ewqm-paper-light), var(--ewqm-paper) 55%, #e6cd8d);
+  box-shadow: 0 3px 9px rgb(0 0 0 / 32%), inset 0 0 24px rgb(137 94 39 / 15%);
+  color: var(--ewqm-ink);
+}
+
+.ewqm-quest-card::before {
+  position: absolute;
+  inset: 0.32rem;
+  border: 1px solid rgb(107 73 36 / 28%);
+  border-radius: 0.12rem 0.25rem 0.15rem 0.2rem;
+  content: "";
+  pointer-events: none;
+}
+
+.ewqm-card-topline,
+.ewqm-card-actions,
+.ewqm-party-vote,
+.ewqm-gm-vote-summary,
+.ewqm-gm-notes {
+  position: relative;
+}
+
+.ewqm-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--ewqm-muted-ink);
+  font-size: 0.73rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ewqm-status-label {
+  font-weight: 800;
+}
+
+.ewqm-quest-card h3 {
+  position: relative;
+  margin: 0.35rem 0 0.4rem;
+  color: #392719;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ewqm-description,
+.ewqm-gm-notes p {
+  position: relative;
+  margin: 0;
+  color: #3c2d20;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.ewqm-party-vote,
+.ewqm-gm-vote-summary {
+  margin-top: 0.8rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgb(90 62 32 / 55%);
+  color: #493523;
+  font-size: 0.8rem;
+}
+
+.ewqm-vote-tally {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+}
+
+.ewqm-vote-instruction,
+.ewqm-pending-outcome {
+  margin: 0 0 0.5rem;
+  color: #654a2f;
+  font-size: 0.76rem;
+}
+
+.ewqm-gm-notes {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 3px solid #805739;
+  background: rgb(111 69 45 / 11%);
+  color: #4b3221;
+  font-size: 0.78rem;
+}
+
+.ewqm-gm-notes p {
+  margin-top: 0.18rem;
+  font-size: 0.83rem;
+}
+
+.ewqm-card-actions {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgb(90 62 32 / 55%);
+}
+
+.ewqm-empty-state {
+  padding: 1.2rem;
+  border: 1px dashed #80603a;
+  border-radius: 0.3rem;
+  color: #e0ceb0;
+  text-align: center;
+}
+
+.ewqm-empty-state p {
+  margin: 0;
+}
+
+@media (max-width: 620px) {
+  .ewqm-board {
+    padding: 0.65rem;
+  }
+
+  .ewqm-masthead h1 {
+    font-size: 1.65rem;
+  }
+}

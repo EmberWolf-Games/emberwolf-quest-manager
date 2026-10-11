@@ -61,6 +61,8 @@ await rm(archivePath, { force: true });
 await mkdir(packagePath, { recursive: true });
 await cp(manifestPath, path.join(packagePath, "module.json"));
 await cp(path.join(repositoryRoot, "scripts"), path.join(packagePath, "scripts"), { recursive: true });
+await cp(path.join(repositoryRoot, "templates"), path.join(packagePath, "templates"), { recursive: true });
+await cp(path.join(repositoryRoot, "styles"), path.join(packagePath, "styles"), { recursive: true });
 await cp(path.join(repositoryRoot, "README.md"), path.join(packagePath, "README.md"));
 await cp(path.join(repositoryRoot, "LICENSE"), path.join(packagePath, "LICENSE"));
 await cp(manifestPath, path.join(distributionPath, "module.json"));

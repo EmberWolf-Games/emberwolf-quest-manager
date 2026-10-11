@@ -2,7 +2,7 @@
 
 A standalone, open-source Adventurer's Guild and procedural quest management module for **Foundry Virtual Tabletop v14** and the **dnd5e** game system.
 
-> **Status: framework skeleton.** The repository now contains a Foundry module manifest and a minimal initialization entry point. Quest generation, storage, and user interfaces are not implemented. Compatibility must be validated against Foundry and dnd5e before it is claimed as verified.
+> **Status: early quest-board implementation.** The module includes GM quest drafts, publication and closure, a parchment-style player board, and party voting. Procedural generation, reward calculations, and deadlines are not implemented. Compatibility is being checked in Foundry v14 with dnd5e.
 
 ## Goals
 
@@ -20,14 +20,15 @@ Examples such as `Collect 2d4 Silver Ore`, `Kill 2d6 Goblins`, and `Escort a nam
 
 - [Initial functional specification](SPECIFICATION.md)
 - [Architecture boundaries](docs/architecture.md)
+- [Quest board behavior](docs/quest-board.md)
 - [Versioning and releases](VERSIONING.md)
 - [Coding agent guidance](AGENTS.md)
 
 ## Development install
 
-Copy `module.json`, `scripts/`, `README.md`, and `LICENSE` into a folder named `emberwolf-quest-manager` under Foundry's user data `Data/modules/` directory. Reload or re-enter the world so Foundry discovers the package, then enable it through **Settings → Manage Modules**. The module is intentionally not activated by this setup.
+Copy `module.json`, `scripts/`, `templates/`, `styles/`, `README.md`, and `LICENSE` into a folder named `emberwolf-quest-manager` under Foundry's user data `Data/modules/` directory. Reload the world after updating files. In the canvas, open the scroll icon in the token controls to access the quest board.
 
-No build, test, or lint commands are defined yet.
+No build, test, or lint commands are defined yet. See the quest board behavior document for the current vote rules and limits.
 
 ## Releases and updates
 
