@@ -46,6 +46,13 @@ These multipliers are starting design assumptions; refine via balancing. Higher 
 - Model distinct available/accepted/completed/failed states; final state transitions, expiration, claims, permissions, and visibility will be specified with implementation.
 - Keep the generator, persistence, and presentation decoupled.
 
+## Initial quest-board rules
+- GM-authored quests begin as drafts and have a public posting plus optional GM-only notes.
+- Drafts and GM-only notes are stored in GM-owned JournalEntry records. The shared setting contains only safe public fields for published quests.
+- Each published quest has an independent party-wide Accept or Decline ballot. Every Player or Trusted world user gets one changeable vote; Assistant Gamemasters and Gamemasters do not vote.
+- A strict majority of all Player or Trusted world users resolves a ballot. Ties and incomplete votes remain open. Closing and reopening a quest starts a fresh ballot.
+- This voter group is an initial implementation choice. Explicit party roster selection and one ballot that selects among several quests remain open questions.
+
 ## Open design questions (do not assume answers)
 - Party roster selection and multiclass level handling.
 - Rank nomenclature and mapping to CR/party level.
