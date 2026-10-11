@@ -1,0 +1,44 @@
+# Secrets / local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.user
+*.suo
+
+# Node / JS / TS
+node_modules/
+dist/
+coverage/
+.npm/
+.pnpm-store/
+
+# .NET
+bin/
+obj/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Unreal Engine generated data
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Logs / temp
+*.log
+tmp/
+temp/
