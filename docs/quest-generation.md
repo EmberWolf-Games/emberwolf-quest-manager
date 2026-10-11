@@ -43,4 +43,3 @@ Reward calculations start with the selected category's party-level pay band in c
 ## Owner-confirmed goals and implementation defaults
 
 The composable pools, party-level calculation, approximate CR band, CP/SP/GP payouts, and three urgency classes are project requirements. The exact pool schema, starter examples, challenge labels and mappings, reward tables, multipliers, displayed-dice choice, and ruleset default are implementation choices that remain open to balancing. Exact deadlines, refresh schedules, and automatic quest lifecycle changes remain unimplemented.
-
