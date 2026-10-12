@@ -214,4 +214,3 @@ function renderGuildCardButtonContents(button, membership, rank) {
 function rankImagePath(rank) {
   return "modules/" + MODULE_ID + "/assets/guild/EWAG_" + rank + ".png";
 }
-
