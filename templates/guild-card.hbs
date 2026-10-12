@@ -2,6 +2,15 @@
   {{#if isMissing}}
     <div class="ewqm-guild-card-missing">This character is unavailable or is not owned by the current player.</div>
   {{else}}
+    {{#if isGM}}
+      <div class="ewqm-guild-card-gm-tools">
+        <button type="button" data-action="toggle-player-view" aria-pressed="{{viewAsPlayer}}">
+          {{#if viewAsPlayer}}Return to GM view{{else}}View as player{{/if}}
+        </button>
+        <span>{{#if viewAsPlayer}}Player workflow preview is active.{{else}}GM controls are active.{{/if}}</span>
+      </div>
+    {{/if}}
+
     {{#if isEnrollment}}<form data-guild-enrollment-form autocomplete="off">{{/if}}
       <article class="ewqm-guild-card-page" aria-label="EmberWolf Adventuring Guild membership card">
         <img class="ewqm-guild-card-background" src="{{backgroundImagePath}}" alt="" aria-hidden="true">
@@ -50,11 +59,24 @@
             <button type="button" data-action="defer-enrollment">Not now</button>
           </div>
         </div>
+      {{else if canManageRank}}
+        <form data-guild-rank-form class="ewqm-guild-card-rank-tools" autocomplete="off">
+          <label>
+            <span>Assign guild rank</span>
+            <select name="rank" aria-label="Assigned guild rank">
+              {{#each rankOptions as |option|}}
+                <option value="{{option.rank}}" {{#if option.selected}}selected{{/if}}>{{option.rank}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <button type="button" data-action="set-guild-rank" class="ewqm-primary">Set rank</button>
+          <p>Assigning a rank enrolls this character if needed and places their Guild XP at the start of that rank.</p>
+        </form>
       {{else}}
         {{#if hasMembership}}
           <p class="ewqm-guild-card-lock-note">Guild information is saved to this character. Level follows the character sheet; guild XP determines rank.</p>
         {{else}}
-          <p class="ewqm-guild-card-lock-note">This character has not joined the guild. The character's player can review and join when opening their sheet.</p>
+          <p class="ewqm-guild-card-lock-note">This character has not joined the guild. Their player can review and join from the character sheet.</p>
         {{/if}}
       {{/if}}
     {{#if isEnrollment}}</form>{{/if}}
