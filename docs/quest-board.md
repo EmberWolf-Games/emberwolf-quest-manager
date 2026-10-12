@@ -27,5 +27,6 @@ These rules are the initial implementation choice for a party-wide vote. Explici
 - GM quest cards include a Delete action. The first click arms deletion for eight seconds; a second click on that quest permanently removes its archive record and public board entry.
 - Reward values are provisional. Deadlines, quest refresh, and automatic completion or failure are not included.
 - The handwritten appearance uses system cursive fonts when available and a browser cursive fallback. No external font service is required.
-- Parchment cards keep a fixed 600 × 800 CSS-pixel size and the source artwork's 3:4 ratio at every board-window size. Card contents scroll within the page; narrow board windows can scroll the card row horizontally.
+- The board displays the guild's unsealed job thumbnail at half its source dimensions (570 × 701 CSS pixels), using a fixed-size horizontal row that can scroll in narrower windows. A party-accepted quest switches to the sealed thumbnail.
+- Selecting a thumbnail opens a separate Foundry window with the full commission rendered over the guild parchment. Player windows include public details and party voting; GM windows may also show private GM notes.
 - The vote result is limited to the board status. It does not create a dnd5e quest tracker entry or distribute rewards.

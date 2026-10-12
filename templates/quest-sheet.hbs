@@ -1,0 +1,81 @@
+<section class="ewqm-sheet-shell">
+  {{#if isMissing}}
+    <div class="ewqm-sheet-missing">This commission is no longer available.</div>
+  {{else}}
+    <article class="ewqm-quest-sheet">
+      <div class="ewqm-sheet-page">
+        <div class="ewqm-sheet-body">
+          <div class="ewqm-sheet-topline">
+            <span class="ewqm-sheet-status">{{statusLabel}}</span>
+            {{#if createdLabel}}<time>Posted: {{createdLabel}}</time>{{/if}}
+          </div>
+
+          <h1>{{title}}</h1>
+
+          <section class="ewqm-sheet-section">
+            <h2>Objective</h2>
+            <p class="ewqm-sheet-description">{{description}}</p>
+          </section>
+
+          {{#if hasCategory}}
+            <section class="ewqm-sheet-section ewqm-sheet-meta">
+              <h2>Type</h2>
+              <p>{{categoryLabel}}{{#if hasUrgency}} · {{urgencyLabel}}{{/if}}</p>
+            </section>
+          {{else if hasUrgency}}
+            <section class="ewqm-sheet-section ewqm-sheet-meta">
+              <h2>Urgency</h2>
+              <p>{{urgencyLabel}}</p>
+            </section>
+          {{/if}}
+
+          {{#if hasReward}}
+            <section class="ewqm-sheet-section ewqm-sheet-reward">
+              <h2>Reward</h2>
+              <p>{{rewardLabel}}</p>
+            </section>
+          {{/if}}
+
+          <section class="ewqm-sheet-clerk-note">
+            <h2>Additional details by guild clerk</h2>
+            <p>{{clerkNote}}</p>
+            {{#if isAccepted}}
+              <img class="ewqm-sheet-seal" src="{{sealPath}}" alt="Party accepted seal">
+            {{/if}}
+          </section>
+
+          {{#if isPartyView}}
+            <section class="ewqm-sheet-vote">
+              <h2>Party decision</h2>
+              <p class="ewqm-sheet-vote-tally">{{voteSummary}}</p>
+              {{#if canVote}}
+                <p class="ewqm-sheet-vote-instruction">Each player has one vote. A strict majority of player accounts decides this commission.</p>
+                <div class="ewqm-vote-actions">
+                  <button type="button" data-action="cast-party-vote" data-vote="accept" class="ewqm-accept {{#if isMyAccept}}is-selected{{/if}}">
+                    {{#if isMyAccept}}Your vote: Accept{{else}}Accept{{/if}}
+                  </button>
+                  <button type="button" data-action="cast-party-vote" data-vote="decline" class="ewqm-decline {{#if isMyDecline}}is-selected{{/if}}">
+                    {{#if isMyDecline}}Your vote: Decline{{else}}Decline{{/if}}
+                  </button>
+                </div>
+              {{/if}}
+              {{#if pendingOutcome}}<p class="ewqm-sheet-pending">A majority has voted. The GM client is synchronizing the result.</p>{{/if}}
+            </section>
+          {{else}}
+            <section class="ewqm-sheet-vote">
+              <h2>Party decision</h2>
+              <p class="ewqm-sheet-vote-tally">{{voteSummary}}</p>
+            </section>
+          {{/if}}
+
+          {{#if hasGmNotes}}
+            <aside class="ewqm-sheet-gm-notes">
+              <h2>GM only</h2>
+              <p>{{gmNotes}}</p>
+            </aside>
+          {{/if}}
+        </div>
+      </div>
+    </article>
+  {{/if}}
+</section>

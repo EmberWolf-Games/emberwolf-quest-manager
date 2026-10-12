@@ -4,13 +4,17 @@
   background: #30271f;
 }
 
+.ewqm-quest-sheet-window .window-content {
+  padding: 0;
+  overflow: auto;
+  background: #30271f;
+}
+
 .ewqm-board {
   --ewqm-ink: #34251a;
   --ewqm-muted-ink: #68513a;
   --ewqm-paper: #f1dfa9;
   --ewqm-paper-light: #fff0c2;
-  --ewqm-quest-card-width: 600px;
-  --ewqm-quest-card-height: 800px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -202,7 +206,8 @@
   gap: 0.45rem;
 }
 
-.ewqm-board button {
+.ewqm-board button,
+.ewqm-quest-sheet-window button {
   min-height: 2rem;
   border: 1px solid #9c7a4d;
   border-radius: 0.25rem;
@@ -214,33 +219,39 @@
 }
 
 .ewqm-board button:hover,
-.ewqm-board button:focus-visible {
+.ewqm-board button:focus-visible,
+.ewqm-quest-sheet-window button:hover,
+.ewqm-quest-sheet-window button:focus-visible {
   border-color: #e3bf79;
   background: #fff0cb;
   outline: 2px solid #e3bf79;
   outline-offset: 1px;
 }
 
-.ewqm-board button.ewqm-primary {
+.ewqm-board button.ewqm-primary,
+.ewqm-quest-sheet-window button.ewqm-primary {
   border-color: #6e4826;
   background: #8c5a2e;
   color: #fff3d8;
 }
 
 .ewqm-board button.ewqm-danger,
-.ewqm-board button.ewqm-decline {
+.ewqm-board button.ewqm-decline,
+.ewqm-quest-sheet-window button.ewqm-decline {
   border-color: #824b37;
   background: #6e3c2e;
   color: #fff0dc;
 }
 
-.ewqm-board button.ewqm-accept {
+.ewqm-board button.ewqm-accept,
+.ewqm-quest-sheet-window button.ewqm-accept {
   border-color: #50613b;
   background: #53633c;
   color: #fff6df;
 }
 
-.ewqm-board button.is-selected {
+.ewqm-board button.is-selected,
+.ewqm-quest-sheet-window button.is-selected {
   box-shadow: 0 0 0 2px #e7c47b inset;
   font-weight: 800;
 }
@@ -272,72 +283,68 @@
 }
 
 .ewqm-quest-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, var(--ewqm-quest-card-width));
+  display: flex;
   align-items: start;
   justify-content: start;
-  gap: 0.85rem;
+  gap: 1rem;
   overflow-x: auto;
   padding: 0 0.3rem 0.65rem;
 }
 
 .ewqm-quest-card {
-  position: relative;
-  width: var(--ewqm-quest-card-width);
-  min-width: var(--ewqm-quest-card-width);
-  height: var(--ewqm-quest-card-height);
-  aspect-ratio: 3 / 4;
-  border: 0;
-  background: transparent;
+  flex: 0 0 570px;
+  width: 570px;
+  min-width: 570px;
   color: var(--ewqm-ink);
 }
 
-.ewqm-quest-card::before {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  background: url("../assets/EWAG_Parchment.png") center / 100% 100% no-repeat;
+.ewqm-quest-thumbnail {
+  display: block;
+  width: 570px;
+  height: 701px;
+  min-height: 0 !important;
+  margin: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 0;
+}
+
+.ewqm-board button.ewqm-quest-thumbnail:hover,
+.ewqm-board button.ewqm-quest-thumbnail:focus-visible {
+  background: transparent;
+  outline: 2px solid #e3bf79;
+  outline-offset: 3px;
+}
+
+.ewqm-quest-thumbnail img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   filter: drop-shadow(0 4px 9px rgb(0 0 0 / 38%));
-  content: "";
-  pointer-events: none;
 }
 
-.ewqm-card-content {
-  position: absolute;
-  z-index: 1;
-  inset: 17.5rem 3rem 1.6rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 0 0.3rem 0.3rem 0;
-  scrollbar-color: #8c5a2e rgb(90 62 32 / 14%);
-  scrollbar-width: thin;
+.ewqm-thumbnail-caption {
+  margin-top: 0.35rem;
+  padding: 0.25rem 0.35rem 0;
+  color: #ead9b9;
 }
 
-.ewqm-card-content > * {
-  position: relative;
-  z-index: 1;
-}
-
-.ewqm-card-topline,
-.ewqm-card-actions,
-.ewqm-party-vote,
-.ewqm-gm-vote-summary,
-.ewqm-gm-notes {
-  position: relative;
-}
-
-.ewqm-card-topline {
+.ewqm-thumbnail-status {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  color: var(--ewqm-muted-ink);
+  color: #d2bc94;
   font-size: 0.73rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.ewqm-card-topline time {
+.ewqm-thumbnail-status time {
   font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
   font-size: 0.77rem;
   font-style: italic;
@@ -350,138 +357,28 @@
 }
 
 .ewqm-status-accepted .ewqm-status-label {
-  color: #8b2c21;
+  color: #e6a19a;
 }
 
 .ewqm-quest-card h3 {
-  position: relative;
-  margin: 0.35rem 0 0.4rem;
-  color: #392719;
+  margin: 0.25rem 0 0.2rem;
+  color: #f3dfb3;
   font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
-  font-size: 1.4rem;
+  font-size: 1.08rem;
   font-weight: 700;
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
-.ewqm-objective {
-  position: relative;
-  margin-top: 0.55rem;
-  padding: 0.48rem 0 0.62rem;
-  border-top: 1px solid rgb(90 62 32 / 45%);
-  border-bottom: 1px solid rgb(90 62 32 / 45%);
-}
-
-.ewqm-objective h4,
-.ewqm-clerk-note h4 {
-  margin: 0 0 0.2rem;
-  color: #49321f;
-  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
-  font-size: 0.89rem;
-  font-variant: small-caps;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-
-.ewqm-description,
-.ewqm-gm-notes p {
-  position: relative;
+.ewqm-thumbnail-caption p {
   margin: 0;
-  color: #3c2d20;
-  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
-  font-size: 1rem;
-  line-height: 1.45;
-  white-space: pre-wrap;
-}
-
-.ewqm-quest-meta {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0.55rem 0 0;
-  color: #654a2f;
-  font-size: 0.72rem;
-}
-
-.ewqm-quest-meta span {
-  padding: 0.16rem 0.4rem;
-  border: 1px solid rgb(90 62 32 / 30%);
-  border-radius: 99px;
-  background: rgb(255 247 214 / 40%);
-}
-
-.ewqm-clerk-note {
-  position: relative;
-  min-height: 5.1rem;
-  margin-top: 0.55rem;
-  padding: 0.5rem 4.1rem 0.62rem 0.15rem;
-  border-bottom: 1px solid rgb(90 62 32 / 35%);
-}
-
-.ewqm-clerk-note--accepted {
-  padding-right: 5.3rem;
-}
-
-.ewqm-clerk-note h4 {
-  margin-bottom: 0.12rem;
-}
-
-.ewqm-clerk-note p {
-  margin: 0;
-  color: #4b241b;
-  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: 0.98rem;
-  font-style: italic;
-  line-height: 1.48;
-  white-space: pre-wrap;
-}
-
-.ewqm-accepted-stamp {
-  position: absolute;
-  right: 0.15rem;
-  bottom: -0.35rem;
-  width: 5rem;
-  height: 5rem;
-  object-fit: contain;
-  mix-blend-mode: multiply;
-  opacity: 0.84;
-  transform: rotate(-8deg);
-  pointer-events: none;
-}
-
-.ewqm-party-vote,
-.ewqm-gm-vote-summary {
-  margin-top: 0.8rem;
-  padding-top: 0.65rem;
-  border-top: 1px dashed rgb(90 62 32 / 55%);
-  color: #493523;
-  font-size: 0.8rem;
-}
-
-.ewqm-vote-tally {
-  margin: 0 0 0.35rem;
-  font-weight: 700;
-}
-
-.ewqm-vote-instruction,
-.ewqm-pending-outcome {
-  margin: 0 0 0.5rem;
-  color: #654a2f;
-  font-size: 0.76rem;
-}
-
-.ewqm-gm-notes {
-  margin-top: 0.75rem;
-  padding: 0.5rem 0.6rem;
-  border-left: 3px solid #805739;
-  background: rgb(111 69 45 / 11%);
-  color: #4b3221;
+  color: #c8b394;
   font-size: 0.78rem;
 }
 
-.ewqm-gm-notes p {
-  margin-top: 0.18rem;
-  font-size: 0.83rem;
+.ewqm-card-actions,
+.ewqm-sheet-vote .ewqm-vote-actions {
+  margin-top: 0.55rem;
 }
 
 .ewqm-card-actions {
@@ -522,6 +419,162 @@
 
 .ewqm-empty-state p {
   margin: 0;
+}
+
+.ewqm-sheet-shell {
+  padding: 0.35rem;
+}
+
+.ewqm-sheet-missing {
+  padding: 2rem;
+  color: #f3dfb3;
+  text-align: center;
+}
+
+.ewqm-quest-sheet {
+  width: 820px;
+  max-width: 100%;
+  margin: 0 auto;
+  color: #34251a;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+}
+
+.ewqm-sheet-page {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: url("../assets/EWAG_Parchment.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 9px rgb(0 0 0 / 38%));
+}
+
+.ewqm-sheet-body {
+  position: absolute;
+  inset: 33% 14% 6%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 0.3rem 0.5rem;
+  scrollbar-color: #8c5a2e rgb(90 62 32 / 14%);
+  scrollbar-width: thin;
+}
+
+.ewqm-sheet-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #68513a;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ewqm-sheet-topline time {
+  font-size: 0.82rem;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ewqm-sheet-body h1 {
+  margin: 0.25rem 0 0.45rem;
+  color: #392719;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.17;
+  overflow-wrap: anywhere;
+}
+
+.ewqm-sheet-section,
+.ewqm-sheet-clerk-note,
+.ewqm-sheet-vote {
+  margin-top: 0.45rem;
+  padding: 0.35rem 0 0.45rem;
+  border-top: 1px solid rgb(90 62 32 / 42%);
+}
+
+.ewqm-sheet-section h2,
+.ewqm-sheet-clerk-note h2,
+.ewqm-sheet-vote h2,
+.ewqm-sheet-gm-notes h2 {
+  margin: 0 0 0.16rem;
+  color: #49321f;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 1rem;
+  font-variant: small-caps;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.ewqm-sheet-section p,
+.ewqm-sheet-clerk-note p,
+.ewqm-sheet-vote p,
+.ewqm-sheet-gm-notes p {
+  margin: 0;
+  color: #3c2d20;
+  font-size: 1rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.ewqm-sheet-meta p,
+.ewqm-sheet-reward p {
+  font-size: 1.12rem;
+}
+
+.ewqm-sheet-clerk-note {
+  position: relative;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgb(90 62 32 / 35%);
+}
+
+.ewqm-sheet-clerk-note p {
+  min-height: 5rem;
+  padding-right: 7rem;
+  color: #4b241b;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 1.05rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.ewqm-sheet-seal {
+  position: absolute;
+  right: 0.1rem;
+  bottom: 0.15rem;
+  width: 6.2rem;
+  height: 6.2rem;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  opacity: 0.86;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.ewqm-sheet-vote {
+  padding-top: 0.45rem;
+}
+
+.ewqm-sheet-vote-tally {
+  font-weight: 700;
+}
+
+.ewqm-sheet-vote-instruction,
+.ewqm-sheet-pending {
+  margin-top: 0.3rem !important;
+  color: #654a2f !important;
+  font-size: 0.82rem !important;
+}
+
+.ewqm-sheet-gm-notes {
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.55rem;
+  border-left: 3px solid #805739;
+  background: rgb(111 69 45 / 11%);
+}
+
+.ewqm-sheet-gm-notes p {
+  font-size: 0.86rem;
 }
 
 @media (max-width: 620px) {

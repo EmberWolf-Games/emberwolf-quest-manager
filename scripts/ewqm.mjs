@@ -1,8 +1,13 @@
-import { openQuestBoard, refreshQuestBoard } from "./quest-board.js";
+import { openQuestBoard, refreshQuestBoard, refreshQuestSheets } from "./quest-board.js";
 import { registerQuestSettings, resolvePartyVotes } from "./quest-store.mjs";
 
 const MODULE_ID = "emberwolf-quest-manager";
 let voteResolutionQueue = Promise.resolve();
+
+function refreshQuestViews() {
+  refreshQuestBoard();
+  refreshQuestSheets();
+}
 
 function queueVoteResolution() {
   if (!game.user?.isGM) return;
@@ -33,11 +38,11 @@ Hooks.once("init", () => {
   Hooks.once("ready", () => {
     Hooks.on("updateUser", () => {
       queueVoteResolution();
-      refreshQuestBoard();
+      refreshQuestViews();
     });
 
     Hooks.on("updateSetting", setting => {
-      if ([MODULE_ID + ".publishedQuests", MODULE_ID + ".partyRoster", MODULE_ID + ".geminiRelayUrl"].includes(setting.key)) refreshQuestBoard();
+      if ([MODULE_ID + ".publishedQuests", MODULE_ID + ".partyRoster", MODULE_ID + ".geminiRelayUrl"].includes(setting.key)) refreshQuestViews();
     });
 
     queueVoteResolution();
