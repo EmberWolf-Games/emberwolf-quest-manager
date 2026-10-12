@@ -2,9 +2,11 @@ import {
   getCharacterGuildProfile,
   getCharacterLevel,
   getGuildMember,
+  GUILD_RANKS,
   getGuildRankProgress,
   getGuildSettings,
-  joinGuild
+  joinGuild,
+  setGuildRank
 } from "./guild-store.mjs";
 
 const MODULE_ID = "emberwolf-quest-manager";
@@ -65,7 +67,9 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
     position: { width: 600, height: 460 },
     actions: {
       "join-guild": this.#joinGuild,
-      "defer-enrollment": this.#deferEnrollment
+      "defer-enrollment": this.#deferEnrollment,
+      "toggle-player-view": this.#togglePlayerView,
+      "set-guild-rank": this.#setGuildRank
     }
   };
 
@@ -77,6 +81,7 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
     super({ id: "ewqm-guild-card-" + actor.id });
     this.actorId = actor.id;
     this.actorUuid = actor.uuid;
+    this.viewAsPlayer = false;
   }
 
   async _prepareContext() {
@@ -88,11 +93,16 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
     const profile = membership?.profile ?? getCharacterGuildProfile(actor);
     const level = getCharacterLevel(actor);
     const experience = Math.max(0, Math.trunc(Number(membership?.guildExperience) || 0));
-    const progress = getGuildRankProgress(experience, settings.xpPerRank);
+    const progress = getGuildRankProgress(experience, settings.rankXpCurve);
+    const isGM = Boolean(game.user?.isGM);
+    const viewAsPlayer = isGM && this.viewAsPlayer;
 
     return {
       isMissing: false,
-      isEnrollment: !membership && canPlayerEnrollGuildCard(actor),
+      isGM,
+      viewAsPlayer,
+      isEnrollment: !membership && (canPlayerEnrollGuildCard(actor) || viewAsPlayer),
+      canManageRank: isGM && !viewAsPlayer,
       hasMembership: Boolean(membership),
       backgroundImagePath: cardBackgroundPath(Boolean(membership)),
       name: profile.name ?? "",
@@ -104,10 +114,10 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
       rank: progress.rank,
       hasRank: Boolean(membership),
       rankImage: rankImagePath(progress.rank),
+      rankOptions: GUILD_RANKS.map(rank => ({ rank, selected: rank === progress.rank })),
       experienceLabel: progress.isMaxRank
         ? "MAX RANK · " + progress.total + " XP"
         : progress.current + "/" + progress.required + " Guild XP",
-      xpPerRank: settings.xpPerRank
     };
   }
 
@@ -117,7 +127,7 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
       const actor = await fromUuid(this.actorUuid);
       const form = this.element.querySelector("[data-guild-enrollment-form]");
       const fields = Object.fromEntries(new FormData(form).entries());
-      const membership = await joinGuild(actor, fields);
+      const membership = await joinGuild(actor, fields, { gmViewAsPlayer: this.viewAsPlayer });
       enrollmentCards.delete(this.actorUuid);
       ui.notifications.info("Guild membership recorded for " + membership.profile.name + ". Your starting rank is G.");
       await this.render({ force: true });
@@ -132,6 +142,33 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
     event.preventDefault();
     enrollmentCards.delete(this.actorUuid);
     await this.close();
+  }
+
+  static async #togglePlayerView(event) {
+    event.preventDefault();
+    if (!game.user?.isGM) return;
+    this.viewAsPlayer = !this.viewAsPlayer;
+    await this.render({ force: true });
+  }
+
+  static async #setGuildRank(event) {
+    event.preventDefault();
+    try {
+      if (!game.user?.isGM) throw new Error("Only a Gamemaster can assign guild rank.");
+      const actor = await fromUuid(this.actorUuid);
+      const form = this.element.querySelector("[data-guild-rank-form]");
+      const rank = new FormData(form).get("rank");
+      const membership = await setGuildRank(actor, rank);
+      const progress = getGuildRankProgress(membership.guildExperience);
+      ui.notifications.info(
+        "Guild rank assigned to " + membership.profile.name + ": " + progress.rank + " (" + progress.total + " Guild XP)."
+      );
+      await this.render({ force: true });
+      if (actor.sheet?.rendered) await actor.sheet.render();
+    } catch (error) {
+      console.error(MODULE_ID + " | Could not assign guild rank.", error);
+      ui.notifications.error(error.message ?? "Could not assign guild rank.");
+    }
   }
 }
 

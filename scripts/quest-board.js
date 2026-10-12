@@ -103,7 +103,6 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       partyLevel,
       partyName: guildSettings.partyName,
       hasPartyName: Boolean(guildSettings.partyName),
-      guildXpPerRank: guildSettings.xpPerRank,
       guildQuestXpAward: guildSettings.questXpAward,
       guildQuestXpPenalty: guildSettings.questXpPenalty,
       hasCharacterActors: partyRoster.some(actor => actor.isSelectable),
@@ -586,3 +585,4 @@ function formatCurrency(copper) {
     remainingCopper ? remainingCopper + " CP" : ""
   ].filter(Boolean).join(", ") || "0 CP";
 }
+
