@@ -726,18 +726,6 @@
   font-size: clamp(0.75rem, 2.75cqw, 1rem);
 }
 
-.ewqm-guild-card-age-label {
-  position: absolute;
-  z-index: 1;
-  left: 30.5%;
-  top: 32%;
-  color: #21150e;
-  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
-  font-size: clamp(0.58rem, 2cqw, 0.72rem);
-  font-variant: small-caps;
-  font-weight: 800;
-}
-
 .ewqm-card-age {
   left: 43.5%;
   top: 31.2%;
