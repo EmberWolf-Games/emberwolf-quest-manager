@@ -652,11 +652,13 @@
 
 .ewqm-guild-card-shell {
   display: grid;
+  width: 100%;
   justify-items: center;
-  gap: 0.55rem;
-  padding: 0.55rem;
+  gap: 0.4rem;
+  padding: 0.4rem;
   color: #f2e4ca;
   font-family: var(--font-primary, Georgia, serif);
+  container-type: inline-size;
 }
 
 .ewqm-guild-card-shell form {
@@ -665,7 +667,7 @@
 
 .ewqm-guild-card-page {
   position: relative;
-  width: min(800px, 100%);
+  width: min(533px, 100%);
   aspect-ratio: 8 / 5;
   color: #26180f;
   filter: drop-shadow(0 4px 9px rgb(0 0 0 / 38%));
@@ -689,7 +691,7 @@
   overflow: hidden;
   color: #24160f;
   font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: clamp(0.78rem, 1.55vw, 1.25rem);
+  font-size: clamp(0.66rem, 2.25cqw, 0.84rem);
   line-height: 1;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -721,7 +723,7 @@
   top: 19.3%;
   width: 47.5%;
   height: 5.8%;
-  font-size: clamp(0.9rem, 1.85vw, 1.55rem);
+  font-size: clamp(0.75rem, 2.75cqw, 1rem);
 }
 
 .ewqm-guild-card-age-label {
@@ -731,7 +733,7 @@
   top: 32%;
   color: #21150e;
   font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
-  font-size: clamp(0.62rem, 1.22vw, 0.96rem);
+  font-size: clamp(0.5rem, 1.75cqw, 0.65rem);
   font-variant: small-caps;
   font-weight: 700;
 }
@@ -789,18 +791,18 @@
   width: 29%;
   color: #342019;
   font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
-  font-size: clamp(0.58rem, 1.1vw, 0.82rem);
+  font-size: clamp(0.5rem, 1.55cqw, 0.62rem);
   line-height: 1.3;
   text-align: center;
 }
 
 .ewqm-guild-card-experience strong {
-  font-size: clamp(0.62rem, 1.2vw, 0.9rem);
+  font-size: clamp(0.53rem, 1.75cqw, 0.68rem);
 }
 
 .ewqm-guild-card-actions {
   display: grid;
-  width: min(800px, 100%);
+  width: min(533px, 100%);
   gap: 0.5rem;
   color: #e3d1b1;
   font-size: 0.8rem;
@@ -846,38 +848,28 @@
 
 .ewqm-guild-card-trigger {
   display: inline-flex !important;
-  flex: 0 0 auto;
+  flex: 0 0 3.65rem !important;
   align-items: center;
   justify-content: center;
-  gap: 0.16rem;
-  min-width: 2rem !important;
-  min-height: 2rem !important;
-  margin: 0 0.2rem;
-  border: 1px solid rgb(133 94 48 / 75%) !important;
-  border-radius: 50% !important;
-  padding: 0.25rem !important;
-  background: rgb(247 231 195 / 92%) !important;
-  color: #412913 !important;
+  width: 3.65rem !important;
+  min-width: 3.65rem !important;
+  max-width: 3.65rem !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 0 0 0.15rem !important;
+  padding: 3px !important;
   cursor: pointer;
-  font: 800 0.75rem var(--font-primary, Georgia, serif) !important;
+  font: 700 0.78rem/1 "Segoe UI Emoji", var(--font-primary, sans-serif) !important;
   line-height: 1 !important;
+  white-space: nowrap;
 }
 
 .ewqm-guild-card-trigger:hover,
 .ewqm-guild-card-trigger:focus-visible {
   border-color: #d2a34e !important;
-  background: #fff0cb !important;
   outline: 2px solid #d2a34e;
   outline-offset: 1px;
-}
-
-.ewqm-guild-card-trigger i {
-  font-size: 0.8rem;
-}
-
-.ewqm-guild-card-trigger-rank {
-  font-family: Georgia, serif;
-  font-size: 0.72rem;
 }
 
 .visually-hidden {

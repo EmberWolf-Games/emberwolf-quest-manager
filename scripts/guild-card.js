@@ -62,7 +62,7 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
       icon: "fa-solid fa-id-card",
       resizable: true
     },
-    position: { width: 840, height: 590 },
+    position: { width: 600, height: 460 },
     actions: {
       "join-guild": this.#joinGuild,
       "defer-enrollment": this.#deferEnrollment
@@ -161,21 +161,11 @@ function addGuildCardHeaderButton(element, actor) {
     ? getGuildRankProgress(membership.guildExperience).rank
     : "";
   button.type = "button";
-  button.className = "ewqm-guild-card-trigger unbutton";
+  button.className = "ewqm-guild-card-trigger gold-button";
   button.dataset.ewqmGuildCardTrigger = "true";
   button.title = membership ? "View guild card — rank " + rank : "Review and join the Adventuring Guild";
   button.setAttribute("aria-label", membership ? "View guild card, rank " + rank : "Join the Adventuring Guild");
-
-  const icon = document.createElement("i");
-  icon.className = "fa-solid fa-id-card";
-  icon.setAttribute("aria-hidden", "true");
-  button.append(icon);
-  if (membership) {
-    const rankLabel = document.createElement("span");
-    rankLabel.textContent = rank;
-    rankLabel.className = "ewqm-guild-card-trigger-rank";
-    button.append(rankLabel);
-  }
+  button.textContent = membership ? rank + "|🪪" : "🪪";
 
   button.addEventListener("click", event => {
     event.preventDefault();
@@ -187,7 +177,9 @@ function addGuildCardHeaderButton(element, actor) {
   });
 
   const restButtons = element.querySelector(".sheet-header .right .sheet-header-buttons");
-  if (restButtons) restButtons.insertAdjacentElement("beforebegin", button);
+  const longRestButton = restButtons?.querySelector(".long-rest");
+  if (longRestButton) longRestButton.insertAdjacentElement("afterend", button);
+  else if (restButtons) restButtons.append(button);
   else levelBadge.insertAdjacentElement("afterend", button);
 }
 
@@ -200,13 +192,7 @@ function refreshGuildCardHeader(actor) {
     const rank = membership ? getGuildRankProgress(membership.guildExperience).rank : "";
     button.title = membership ? "View guild card — rank " + rank : "Review and join the Adventuring Guild";
     button.setAttribute("aria-label", membership ? "View guild card, rank " + rank : "Join the Adventuring Guild");
-    button.querySelector(".ewqm-guild-card-trigger-rank")?.remove();
-    if (membership) {
-      const rankLabel = document.createElement("span");
-      rankLabel.className = "ewqm-guild-card-trigger-rank";
-      rankLabel.textContent = rank;
-      button.append(rankLabel);
-    }
+    button.textContent = membership ? rank + "|🪪" : "🪪";
   }
 }
 
