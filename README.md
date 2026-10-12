@@ -2,7 +2,7 @@
 
 A standalone, open-source Adventurer's Guild and procedural quest management module for **Foundry Virtual Tabletop v14** and the **dnd5e** game system.
 
-> **Status: early quest-board implementation.** The module includes GM quest drafts, publication and closure, a parchment-style player board, and party voting. Procedural generation, reward calculations, and deadlines are not implemented. Compatibility is being checked in Foundry v14 with dnd5e.
+> **Status: early implementation.** The module includes a GM-facing procedural draft generator, quest publication and closure, a parchment-style player board, and party voting. Generator pools, feasibility estimates, and payouts use provisional starter values. Deadlines are not implemented. Compatibility is being checked in Foundry v14 with dnd5e.
 
 ## Goals
 
@@ -21,12 +21,14 @@ Examples such as `Collect 2d4 Silver Ore`, `Kill 2d6 Goblins`, and `Escort a nam
 - [Initial functional specification](SPECIFICATION.md)
 - [Architecture boundaries](docs/architecture.md)
 - [Quest board behavior](docs/quest-board.md)
+- [Procedural generation and provisional balancing](docs/quest-generation.md)
+- [Optional Gemini guild-clerk notes](docs/gemini-clerk-notes.md)
 - [Versioning and releases](VERSIONING.md)
 - [Coding agent guidance](AGENTS.md)
 
 ## Development install
 
-Copy `module.json`, `scripts/`, `templates/`, `styles/`, `README.md`, and `LICENSE` into a folder named `emberwolf-quest-manager` under Foundry's user data `Data/modules/` directory. Reload the world after updating files. In the canvas, open the scroll icon in the token controls to access the quest board.
+Copy `module.json`, `scripts/`, `templates/`, `styles/`, `assets/`, `README.md`, and `LICENSE` into a folder named `emberwolf-quest-manager` under Foundry's user data `Data/modules/` directory. Reload the world after updating files. In the canvas, open the scroll icon in the token controls to access the quest board.
 
 No build, test, or lint commands are defined yet. See the quest board behavior document for the current vote rules and limits.
 

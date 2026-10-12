@@ -2,12 +2,14 @@
 
 ## GM workflow
 
-1. Write a title, public posting, and optional GM only notes.
-2. Save the commission as a draft. Drafts appear only in the GM board.
+1. Optionally choose the player characters in the party roster and generate one or more quest drafts from category-constrained pools. The roster's average level is floored; generated drafts and their private generation notes appear only on the GM board.
+2. Review and edit a generated draft, or write a commission manually. Save it as a draft.
 3. Publish it to make the public posting visible to players and open a fresh party ballot.
 4. Close a published quest to remove it from the player board. A GM may reopen a closed, accepted, or declined quest; reopening starts a fresh ballot.
 
-GM only notes and draft data are stored in JournalEntry records inside a GM-owned archive folder. The shared world setting stores only published quest titles, public descriptions, statuses, and vote-round identifiers. It never stores private notes or draft text.
+Generation combines a category's actions, quantities, targets, and reward table. The details and all provisional balancing values are in [quest-generation.md](quest-generation.md).
+
+GM only notes and draft data are stored in JournalEntry records inside a GM-owned archive folder. The `publishedQuests` world setting stores only published quest titles, public descriptions, guild-clerk notes, safe category/urgency/reward fields, statuses, and vote-round identifiers. Private notes and generation metadata stay in GM-owned journal records. The separate `partyRoster` setting stores the character IDs explicitly selected by the GM for generation. The optional Gemini relay URL is stored in a client-scoped setting on the GM browser; see [Gemini guild-clerk notes](gemini-clerk-notes.md) for key handling and setup.
 
 ## Party vote
 
@@ -21,7 +23,8 @@ These rules are the initial implementation choice for a party-wide vote. Explici
 
 ## Current limits
 
-- Quest text is written by the GM; procedural generation is not included.
-- Rewards, deadlines, quest refresh, and automatic completion or failure are not included.
+- Procedural generation creates reviewable drafts only; it does not publish or balance them as final game rules.
+- GM quest cards include a Delete action. The first click arms deletion for eight seconds; a second click on that quest permanently removes its archive record and public board entry.
+- Reward values are provisional. Deadlines, quest refresh, and automatic completion or failure are not included.
 - The handwritten appearance uses system cursive fonts when available and a browser cursive fallback. No external font service is required.
 - The vote result is limited to the board status. It does not create a dnd5e quest tracker entry or distribute rewards.

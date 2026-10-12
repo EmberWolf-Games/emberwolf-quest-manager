@@ -1,5 +1,7 @@
 const MODULE_ID = "emberwolf-quest-manager";
 const PUBLIC_QUESTS_SETTING = "publishedQuests";
+const PARTY_ROSTER_SETTING = "partyRoster";
+const GEMINI_RELAY_SETTING = "geminiRelayUrl";
 const PRIVATE_ARCHIVE_FLAG = "privateArchive";
 const PRIVATE_QUEST_FLAG = "questRecord";
 const QUEST_ID_FLAG = "questId";
@@ -18,6 +20,93 @@ export function registerQuestSettings() {
     type: String,
     default: "[]"
   });
+  game.settings.register(MODULE_ID, PARTY_ROSTER_SETTING, {
+    name: "Quest Generator Party Roster",
+    hint: "World character IDs explicitly selected by a Gamemaster for party-level quest generation.",
+    scope: "world",
+    config: false,
+    type: String,
+    default: "[]"
+  });
+  game.settings.register(MODULE_ID, GEMINI_RELAY_SETTING, {
+    name: "Quest Board Gemini Relay URL",
+    hint: "GM-client relay endpoint used to draft guild-clerk notes. No API key is stored by the module.",
+    scope: "client",
+    config: false,
+    type: String,
+    default: ""
+  });
+}
+
+export function getGeminiRelayUrl() {
+  if (!game.user?.isGM) return "";
+  return String(game.settings.get(MODULE_ID, GEMINI_RELAY_SETTING) ?? "").trim();
+}
+
+export async function saveGeminiRelayUrl(value) {
+  requireGM();
+  const relayUrl = cleanText(value, 500);
+  if (relayUrl) {
+    let parsed;
+    try {
+      parsed = new URL(relayUrl);
+    } catch {
+      throw new Error("Enter a valid HTTPS relay URL, or a local HTTP URL such as http://127.0.0.1:30001/gemini/clerk-note.");
+    }
+    const localHosts = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+    if (!new Set(["https:", "http:"]).has(parsed.protocol)
+      || (parsed.protocol === "http:" && !localHosts.has(parsed.hostname))
+      || parsed.username || parsed.password || parsed.search || parsed.hash) {
+      throw new Error("Use HTTPS for a remote relay. HTTP is allowed only for a local relay, and relay URLs cannot contain credentials or query parameters.");
+    }
+  }
+  await game.settings.set(MODULE_ID, GEMINI_RELAY_SETTING, relayUrl);
+  return relayUrl;
+}
+
+export function getPartyRoster() {
+  const selectedIds = new Set(readPartyRosterIds());
+  return game.actors.contents
+    .filter(actor => actor.type === "character")
+    .map(actor => {
+      const level = getCharacterLevel(actor);
+      return {
+        id: actor.id,
+        name: actor.name,
+        level,
+        levelLabel: level ? "Level " + level : "Level unavailable",
+        isSelected: selectedIds.has(actor.id),
+        isSelectable: Number.isInteger(level) && level >= 1 && level <= 20
+      };
+    })
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export async function getPartyMembers() {
+  const actors = new Map(game.actors.contents.map(actor => [actor.id, actor]));
+  return readPartyRosterIds().map(id => actors.get(id)).filter(actor => actor?.type === "character")
+    .map(actor => ({ id: actor.id, name: actor.name, level: getCharacterLevel(actor) }))
+    .filter(member => Number.isInteger(member.level) && member.level >= 1 && member.level <= 20);
+}
+
+export async function savePartyRoster(actorIds) {
+  requireGM();
+  const requestedIds = [...new Set((Array.isArray(actorIds) ? actorIds : []).map(id => String(id)))];
+  const actors = new Map(game.actors.contents.map(actor => [actor.id, actor]));
+  const validIds = [];
+  for (const id of requestedIds) {
+    const actor = actors.get(id);
+    if (!actor || actor.type !== "character") {
+      throw new Error("The party roster can include only character actors in this world.");
+    }
+    const level = getCharacterLevel(actor);
+    if (!Number.isInteger(level) || level < 1 || level > 20) {
+      throw new Error(actor.name + " does not have a usable dnd5e character level.");
+    }
+    validIds.push(id);
+  }
+  await game.settings.set(MODULE_ID, PARTY_ROSTER_SETTING, JSON.stringify(validIds));
+  return getPartyMembers();
 }
 
 export function getPublishedQuests() {
@@ -79,14 +168,37 @@ export async function saveDraft(questId, fields) {
 
   const quests = await getPrivateQuests();
   const existing = quests.find(quest => quest.id === questId);
+  const clerkNote = cleanText(fields.clerkNote ?? existing?.clerkNote ?? "", 1200);
   const now = Date.now();
+  const categoryId = cleanText(fields.categoryId || existing?.categoryId, 80);
+  const categoryLabel = cleanText(fields.categoryLabel || existing?.categoryLabel, 80);
+  const urgencyId = cleanText(fields.urgencyId || existing?.urgencyId, 40);
+  const urgencyLabel = cleanText(fields.urgencyLabel || existing?.urgencyLabel, 40);
+  const rewardCandidate = fields.rewardCopper ?? existing?.rewardCopper;
+  const rewardCopper = rewardCandidate !== null
+    && rewardCandidate !== undefined
+    && rewardCandidate !== ""
+    && Number.isFinite(Number(rewardCandidate))
+    && Number(rewardCandidate) >= 0
+    ? Math.round(Number(rewardCandidate))
+    : null;
+  const generationMetadata = fields.generationMetadata
+    ? foundry.utils.deepClone(fields.generationMetadata)
+    : existing?.generationMetadata ?? null;
   const record = existing
-    ? { ...existing, title, description, gmNotes, updatedAt: now }
+    ? { ...existing, title, description, clerkNote, gmNotes, categoryId, categoryLabel, urgencyId, urgencyLabel, rewardCopper, generationMetadata, updatedAt: now }
     : {
         id: foundry.utils.randomID(),
         title,
         description,
+        clerkNote,
         gmNotes,
+        categoryId,
+        categoryLabel,
+        urgencyId,
+        urgencyLabel,
+        rewardCopper,
+        generationMetadata,
         status: "draft",
         voteRoundId: null,
         createdAt: now,
@@ -120,6 +232,16 @@ export async function closeQuest(questId) {
   await persistPrivateQuest(record);
   await syncPublicQuests();
   return record;
+}
+
+export async function deleteQuest(questId) {
+  requireGM();
+  const entry = game.journal.contents.find(document =>
+    document.getFlag(MODULE_ID, QUEST_ID_FLAG) === questId
+  );
+  if (!entry) throw new Error("That quest could not be found in the GM archive.");
+  await entry.delete();
+  await syncPublicQuests();
 }
 
 export async function reopenQuest(questId) {
@@ -213,6 +335,14 @@ async function syncPublicQuests() {
       id: quest.id,
       title: quest.title,
       description: quest.description,
+      clerkNote: quest.clerkNote ?? "",
+      categoryId: quest.categoryId ?? "",
+      categoryLabel: quest.categoryLabel ?? "",
+      urgencyId: quest.urgencyId ?? "",
+      urgencyLabel: quest.urgencyLabel ?? "",
+      rewardCopper: quest.rewardCopper !== null && quest.rewardCopper !== undefined && Number.isFinite(Number(quest.rewardCopper))
+        ? Number(quest.rewardCopper)
+        : null,
       status: quest.status,
       voteRoundId: quest.voteRoundId,
       createdAt: quest.createdAt,
@@ -227,4 +357,28 @@ function requireGM() {
 
 function cleanText(value, maximumLength) {
   return String(value ?? "").trim().slice(0, maximumLength);
+}
+
+function readPartyRosterIds() {
+  try {
+    const stored = game.settings.get(MODULE_ID, PARTY_ROSTER_SETTING);
+    const parsed = JSON.parse(stored || "[]");
+    return Array.isArray(parsed) ? [...new Set(parsed.map(id => String(id)))] : [];
+  } catch (error) {
+    console.error(MODULE_ID + " | Party roster data is not valid JSON.", error);
+    return [];
+  }
+}
+
+function getCharacterLevel(actor) {
+  let rollLevel;
+  try {
+    rollLevel = Number(actor.getRollData?.()?.details?.level);
+  } catch (error) {
+    console.debug(MODULE_ID + " | Could not read dnd5e roll-data character level for " + actor.name + ".", error);
+  }
+  const level = Number.isInteger(rollLevel) && rollLevel > 0
+    ? rollLevel
+    : Number(actor.system?.details?.level);
+  return Number.isInteger(level) ? level : null;
 }

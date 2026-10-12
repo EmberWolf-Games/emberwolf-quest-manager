@@ -85,7 +85,8 @@
 }
 
 .ewqm-field input,
-.ewqm-field textarea {
+.ewqm-field textarea,
+.ewqm-field select {
   width: 100%;
   border: 1px solid #876a48;
   border-radius: 0.25rem;
@@ -97,6 +98,91 @@
 
 .ewqm-field textarea {
   resize: vertical;
+}
+
+.ewqm-generator-intro,
+.ewqm-muted,
+.ewqm-roster-summary {
+  margin: 0.65rem 0 0;
+  color: #d5c19e;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.ewqm-generator-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+  gap: 0.6rem;
+}
+
+.ewqm-ai-settings {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px dashed #80603a;
+  border-radius: 0.3rem;
+  background: rgb(255 241 205 / 5%);
+}
+
+.ewqm-ai-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #dfcda9;
+  font-size: 0.76rem;
+}
+
+.ewqm-roster {
+  min-width: 0;
+  margin: 0.7rem 0 0;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border: 1px solid #765a3b;
+  border-radius: 0.3rem;
+}
+
+.ewqm-roster legend {
+  padding: 0 0.3rem;
+  color: #efd9a8;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ewqm-roster-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 0.3rem 0.65rem;
+}
+
+.ewqm-roster-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  color: #ead9b9;
+  font-size: 0.8rem;
+}
+
+.ewqm-roster-option input {
+  margin: 0;
+  accent-color: #d6b36f;
+}
+
+.ewqm-roster-option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ewqm-roster-option small {
+  color: #c8b394;
+  font-size: 0.72rem;
+}
+
+.ewqm-roster-option.is-disabled {
+  opacity: 0.6;
 }
 
 .ewqm-private-field span::after {
@@ -192,27 +278,27 @@
 
 .ewqm-quest-card {
   position: relative;
-  overflow: hidden;
-  padding: 0.9rem 1rem 0.85rem;
-  border: 1px solid #956a37;
-  border-radius: 0.2rem 0.45rem 0.25rem 0.35rem;
-  background-color: var(--ewqm-paper);
-  background-image:
-    radial-gradient(ellipse at 7% 10%, rgb(255 247 214 / 58%), transparent 35%),
-    radial-gradient(ellipse at 93% 87%, rgb(163 112 49 / 19%), transparent 40%),
-    repeating-linear-gradient(3deg, rgb(123 87 43 / 3%) 0 1px, transparent 1px 5px),
-    linear-gradient(127deg, var(--ewqm-paper-light), var(--ewqm-paper) 55%, #e6cd8d);
-  box-shadow: 0 3px 9px rgb(0 0 0 / 32%), inset 0 0 24px rgb(137 94 39 / 15%);
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  padding: clamp(9.5rem, 48%, 16rem) clamp(1.65rem, 8%, 3.1rem) 2.2rem;
+  border: 0;
+  background: transparent;
   color: var(--ewqm-ink);
 }
 
 .ewqm-quest-card::before {
   position: absolute;
-  inset: 0.32rem;
-  border: 1px solid rgb(107 73 36 / 28%);
-  border-radius: 0.12rem 0.25rem 0.15rem 0.2rem;
+  z-index: 0;
+  inset: 0;
+  background: url("../assets/EWAG_Parchment.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 9px rgb(0 0 0 / 38%));
   content: "";
   pointer-events: none;
+}
+
+.ewqm-quest-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .ewqm-card-topline,
@@ -234,18 +320,49 @@
   text-transform: uppercase;
 }
 
+.ewqm-card-topline time {
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 0.77rem;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .ewqm-status-label {
   font-weight: 800;
+}
+
+.ewqm-status-accepted .ewqm-status-label {
+  color: #8b2c21;
 }
 
 .ewqm-quest-card h3 {
   position: relative;
   margin: 0.35rem 0 0.4rem;
   color: #392719;
-  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: 1.3rem;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 1.4rem;
   font-weight: 700;
   line-height: 1.25;
+}
+
+.ewqm-objective {
+  position: relative;
+  margin-top: 0.55rem;
+  padding: 0.48rem 0 0.62rem;
+  border-top: 1px solid rgb(90 62 32 / 45%);
+  border-bottom: 1px solid rgb(90 62 32 / 45%);
+}
+
+.ewqm-objective h4,
+.ewqm-clerk-note h4 {
+  margin: 0 0 0.2rem;
+  color: #49321f;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 0.89rem;
+  font-variant: small-caps;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .ewqm-description,
@@ -253,10 +370,66 @@
   position: relative;
   margin: 0;
   color: #3c2d20;
-  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 1rem;
+  line-height: 1.45;
   white-space: pre-wrap;
+}
+
+.ewqm-quest-meta {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.55rem 0 0;
+  color: #654a2f;
+  font-size: 0.72rem;
+}
+
+.ewqm-quest-meta span {
+  padding: 0.16rem 0.4rem;
+  border: 1px solid rgb(90 62 32 / 30%);
+  border-radius: 99px;
+  background: rgb(255 247 214 / 40%);
+}
+
+.ewqm-clerk-note {
+  position: relative;
+  min-height: 5.1rem;
+  margin-top: 0.55rem;
+  padding: 0.5rem 4.1rem 0.62rem 0.15rem;
+  border-bottom: 1px solid rgb(90 62 32 / 35%);
+}
+
+.ewqm-clerk-note--accepted {
+  padding-right: 5.3rem;
+}
+
+.ewqm-clerk-note h4 {
+  margin-bottom: 0.12rem;
+}
+
+.ewqm-clerk-note p {
+  margin: 0;
+  color: #4b241b;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: 0.98rem;
+  font-style: italic;
+  line-height: 1.48;
+  white-space: pre-wrap;
+}
+
+.ewqm-accepted-stamp {
+  position: absolute;
+  right: 0.15rem;
+  bottom: -0.35rem;
+  width: 5rem;
+  height: 5rem;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  opacity: 0.84;
+  transform: rotate(-8deg);
+  pointer-events: none;
 }
 
 .ewqm-party-vote,
@@ -298,6 +471,28 @@
   margin-top: 0.65rem;
   padding-top: 0.55rem;
   border-top: 1px dashed rgb(90 62 32 / 55%);
+}
+
+.ewqm-board button.ewqm-delete {
+  border-color: #7f211d;
+  background: #9a3028;
+  color: #fff4e6;
+  font-weight: 800;
+}
+
+.ewqm-board button.ewqm-delete:hover,
+.ewqm-board button.ewqm-delete:focus-visible {
+  border-color: #5e1714;
+  background: #b23b31;
+  outline-color: #c87963;
+}
+
+.ewqm-delete-confirmation {
+  position: relative;
+  margin: 0.45rem 0 0;
+  color: #72251f;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .ewqm-empty-state {
