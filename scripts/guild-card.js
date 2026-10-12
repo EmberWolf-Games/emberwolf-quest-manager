@@ -165,7 +165,7 @@ function addGuildCardHeaderButton(element, actor) {
   button.dataset.ewqmGuildCardTrigger = "true";
   button.title = membership ? "View guild card — rank " + rank : "Review and join the Adventuring Guild";
   button.setAttribute("aria-label", membership ? "View guild card, rank " + rank : "Join the Adventuring Guild");
-  button.textContent = membership ? rank + "|🪪" : "🪪";
+  renderGuildCardButtonContents(button, membership, rank);
 
   button.addEventListener("click", event => {
     event.preventDefault();
@@ -192,8 +192,23 @@ function refreshGuildCardHeader(actor) {
     const rank = membership ? getGuildRankProgress(membership.guildExperience).rank : "";
     button.title = membership ? "View guild card — rank " + rank : "Review and join the Adventuring Guild";
     button.setAttribute("aria-label", membership ? "View guild card, rank " + rank : "Join the Adventuring Guild");
-    button.textContent = membership ? rank + "|🪪" : "🪪";
+    renderGuildCardButtonContents(button, membership, rank);
   }
+}
+
+function renderGuildCardButtonContents(button, membership, rank) {
+  button.replaceChildren();
+
+  if (membership) {
+    const rankLabel = document.createElement("span");
+    rankLabel.textContent = rank;
+    button.append(rankLabel, document.createTextNode("|"));
+  }
+
+  const icon = document.createElement("i");
+  icon.className = "fa-solid fa-id-card ewqm-guild-card-icon";
+  icon.setAttribute("aria-hidden", "true");
+  button.append(icon);
 }
 
 function rankImagePath(rank) {
