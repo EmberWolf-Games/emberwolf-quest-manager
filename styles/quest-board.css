@@ -691,7 +691,7 @@
   overflow: hidden;
   color: #24160f;
   font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: clamp(0.66rem, 2.25cqw, 0.84rem);
+  font-size: clamp(0.78rem, 2.8cqw, 0.96rem);
   line-height: 1;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -719,9 +719,9 @@
 }
 
 .ewqm-card-name {
-  left: 40.5%;
+  left: 43.5%;
   top: 19.3%;
-  width: 47.5%;
+  width: 44.5%;
   height: 5.8%;
   font-size: clamp(0.75rem, 2.75cqw, 1rem);
 }
@@ -733,51 +733,54 @@
   top: 32%;
   color: #21150e;
   font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
-  font-size: clamp(0.5rem, 1.75cqw, 0.65rem);
+  font-size: clamp(0.58rem, 2cqw, 0.72rem);
   font-variant: small-caps;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .ewqm-card-age {
-  left: 40.5%;
+  left: 43.5%;
   top: 31.2%;
-  width: 46%;
-  height: 4.1%;
+  width: 44.5%;
+  height: 5.2%;
+  border-bottom: 1px solid rgb(49 31 19 / 82%);
+  font-size: clamp(0.9rem, 3.1cqw, 1.08rem);
+  font-weight: 700;
 }
 
 .ewqm-card-class {
-  left: 41.5%;
+  left: 43.5%;
   top: 42%;
-  width: 46%;
+  width: 44.5%;
   height: 5.5%;
 }
 
 .ewqm-card-level {
-  left: 42%;
+  left: 43.5%;
   top: 54.2%;
-  width: 24%;
+  width: 24.5%;
   height: 5.5%;
 }
 
 .ewqm-card-gender {
-  left: 41.5%;
+  left: 43.5%;
   top: 66.4%;
-  width: 46%;
+  width: 44.5%;
   height: 5.5%;
 }
 
 .ewqm-card-race {
-  left: 41.5%;
+  left: 43.5%;
   top: 78.7%;
-  width: 46%;
+  width: 44.5%;
   height: 5.5%;
 }
 
 .ewqm-guild-card-rank {
   position: absolute;
   z-index: 1;
-  left: 8.5%;
-  top: 50.5%;
+  left: 4.5%;
+  top: 52.8%;
   width: 25%;
   height: 22.5%;
   object-fit: contain;
@@ -786,8 +789,8 @@
 .ewqm-guild-card-experience {
   position: absolute;
   z-index: 1;
-  top: 73%;
-  left: 6.5%;
+  top: 75.3%;
+  left: 2.5%;
   width: 29%;
   color: #342019;
   font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
@@ -860,9 +863,16 @@
   margin: 0 0 0 0.15rem !important;
   padding: 3px !important;
   cursor: pointer;
-  font: 700 0.78rem/1 "Segoe UI Emoji", var(--font-primary, sans-serif) !important;
+  gap: 0.18rem;
+  color: #4c3421;
+  font: 700 0.78rem/1 var(--font-primary, sans-serif) !important;
   line-height: 1 !important;
   white-space: nowrap;
+}
+
+.ewqm-guild-card-icon {
+  color: #634522;
+  font-size: 0.9rem;
 }
 
 .ewqm-guild-card-trigger:hover,
@@ -890,3 +900,4 @@
     font-size: 1.65rem;
   }
 }
+
