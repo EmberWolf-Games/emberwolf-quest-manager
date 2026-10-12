@@ -1,7 +1,7 @@
 import { openQuestBoard, refreshQuestBoard, refreshQuestSheets } from "./quest-board.js";
 import { registerQuestSettings, resolvePartyVotes } from "./quest-store.mjs";
 import { registerGuildCardHooks, refreshGuildCardViews } from "./guild-card.js";
-import { registerGuildSettings } from "./guild-store.mjs";
+import { GUILD_RANK_XP_SETTING_KEYS, registerGuildSettings } from "./guild-store.mjs";
 
 const MODULE_ID = "emberwolf-quest-manager";
 let voteResolutionQueue = Promise.resolve();
@@ -51,7 +51,7 @@ Hooks.once("init", () => {
         MODULE_ID + ".partyRoster",
         MODULE_ID + ".geminiRelayUrl",
         MODULE_ID + ".partyName",
-        MODULE_ID + ".guildXpPerRank",
+        ...GUILD_RANK_XP_SETTING_KEYS.map(key => MODULE_ID + "." + key),
         MODULE_ID + ".guildQuestXpAward",
         MODULE_ID + ".guildQuestXpPenalty"
       ].includes(setting.key)) {
@@ -78,3 +78,4 @@ function ensureStylesheet() {
   stylesheet.dataset.ewqmStylesheet = "true";
   document.head.append(stylesheet);
 }
+
