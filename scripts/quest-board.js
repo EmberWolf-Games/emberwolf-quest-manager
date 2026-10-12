@@ -51,7 +51,7 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       "close-quest": this.#closeQuest,
       "delete-quest": this.#deleteQuest,
       "reopen-quest": this.#reopenQuest,
-      "cast-party-vote": this.#castPartyVote,
+      "open-quest-sheet": this.#openQuestSheet,
       "save-party-roster": this.#savePartyRoster,
       "save-gemini-relay": this.#saveGeminiRelay,
       "generate-quests": this.#generateQuests
@@ -140,6 +140,10 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       isAccepted: displayStatus === "accepted",
       isDeclined: displayStatus === "declined",
       isClosed: displayStatus === "closed",
+      thumbnailPath: displayStatus === "accepted"
+        ? "modules/" + MODULE_ID + "/assets/EWAG_Job_Sealed_Thumbnail.png"
+        : "modules/" + MODULE_ID + "/assets/EWAG_Job_Thumbnail.png",
+      thumbnailAlt: quest.title + (displayStatus === "accepted" ? " — accepted by the party" : " — open guild posting"),
       canVote: !isGM && isAvailable && !tally.outcome,
       pendingOutcome: !isGM && quest.status === "available" && Boolean(tally.outcome),
       isMyAccept: myVote === "accept",
@@ -377,20 +381,117 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
     }
   }
 
+  static async #openQuestSheet(event, target) {
+    event.preventDefault();
+    try {
+      const questId = target.dataset.questId;
+      const quest = game.user.isGM
+        ? await getPrivateQuest(questId)
+        : getPublishedQuests().find(record => record.id === questId);
+      if (!quest) throw new Error("That commission could not be found.");
+      await openQuestSheet(questId);
+    } catch (error) {
+      console.error(MODULE_ID + " | Could not open the quest sheet.", error);
+      ui.notifications.error(error.message ?? "Could not open that quest sheet.");
+    }
+  }
+}
+
+export class QuestSheetApplication extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "ewqm-quest-sheet",
+    classes: [MODULE_ID, "ewqm-quest-sheet-window"],
+    window: {
+      title: "Guild Commission",
+      icon: "fa-solid fa-scroll",
+      resizable: true
+    },
+    position: { width: 900, height: 1000 },
+    actions: {
+      "cast-party-vote": this.#castPartyVote
+    }
+  };
+
+  static PARTS = {
+    main: { template: "modules/" + MODULE_ID + "/templates/quest-sheet.hbs" }
+  };
+
+  constructor(questId) {
+    super({ id: "ewqm-quest-sheet-" + questId });
+    this.questId = questId;
+  }
+
+  async _prepareContext() {
+    const quest = game.user.isGM
+      ? await getPrivateQuest(this.questId)
+      : getPublishedQuests().find(record => record.id === this.questId);
+    if (!quest) return { isMissing: true };
+
+    const tally = getVoteSummary(quest);
+    const status = quest.status === "available" ? (tally.outcome ?? quest.status) : quest.status;
+    const votes = game.user.getFlag(MODULE_ID, PLAYER_VOTES_FLAG) ?? {};
+    const myVote = votes[quest.voteRoundId] ?? "";
+    const hasReward = quest.rewardCopper !== null
+      && quest.rewardCopper !== undefined
+      && Number.isFinite(Number(quest.rewardCopper));
+
+    return {
+      isGM: game.user.isGM,
+      isMissing: false,
+      title: quest.title,
+      description: quest.description,
+      clerkNote: quest.clerkNote || makeFallbackClerkNote(quest),
+      gmNotes: game.user.isGM ? quest.gmNotes : "",
+      hasGmNotes: game.user.isGM && Boolean(quest.gmNotes),
+      createdLabel: formatDate(quest.createdAt),
+      statusLabel: STATUS_LABELS[status] ?? "Unknown status",
+      isAccepted: status === "accepted",
+      isAvailable: status === "available",
+      isDeclined: status === "declined",
+      categoryLabel: quest.categoryLabel ?? "",
+      urgencyLabel: quest.urgencyLabel ?? "",
+      hasCategory: Boolean(quest.categoryLabel),
+      hasUrgency: Boolean(quest.urgencyLabel),
+      hasReward,
+      rewardLabel: hasReward ? formatCurrency(Number(quest.rewardCopper)) : "",
+      canVote: !game.user.isGM && status === "available" && !tally.outcome,
+      isMyAccept: myVote === "accept",
+      isMyDecline: myVote === "decline",
+      voteSummary: tally.eligible === 0
+        ? "No player accounts are configured for this world."
+        : tally.accept + " accept · " + tally.decline + " decline · " + tally.required + " needed for a majority",
+      pendingOutcome: !game.user.isGM && quest.status === "available" && Boolean(tally.outcome),
+      isPartyView: !game.user.isGM,
+      sealPath: "modules/" + MODULE_ID + "/assets/EWAG_Seal.png"
+    };
+  }
+
   static async #castPartyVote(event, target) {
     event.preventDefault();
     try {
-      await castPartyVote(target.dataset.questId, target.dataset.vote);
+      await castPartyVote(this.questId, target.dataset.vote);
       ui.notifications.info("Your choice was added to the party vote.");
-      await this.render();
+      await this.render({ force: true });
+      await refreshQuestBoard();
     } catch (error) {
       console.error(MODULE_ID + " | Could not record party vote.", error);
-      ui.notifications.error(error.message ?? "Could not record your vote.");
+      ui.notifications.error(error.message ?? "Could not record the party vote.");
     }
   }
 }
 
 const PUBLIC_STATUSES = new Set(["available", "accepted", "declined"]);
+const openQuestSheets = new Map();
+
+async function openQuestSheet(questId) {
+  let application = openQuestSheets.get(questId);
+  if (!application || !application.rendered) {
+    application = new QuestSheetApplication(questId);
+    openQuestSheets.set(questId, application);
+  }
+  if (application.rendered) application.bringToFront();
+  await application.render({ force: true });
+}
 
 export function openQuestBoard() {
   if (!activeBoard || !activeBoard.rendered) activeBoard = new QuestBoardApplication();
@@ -400,6 +501,12 @@ export function openQuestBoard() {
 export function refreshQuestBoard() {
   if (activeBoard?.rendered) return activeBoard.render();
   return Promise.resolve();
+}
+
+export function refreshQuestSheets() {
+  return Promise.all([...openQuestSheets.values()]
+    .filter(application => application.rendered)
+    .map(application => application.render()));
 }
 
 function formatDate(timestamp) {

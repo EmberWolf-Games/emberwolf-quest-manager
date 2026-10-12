@@ -145,63 +145,19 @@
     <div class="ewqm-quest-list">
       {{#each quests as |quest|}}
         <article class="ewqm-quest-card ewqm-status-{{quest.statusClass}}">
-          <div class="ewqm-card-content">
-          <div class="ewqm-card-topline">
-            <span class="ewqm-status-label">{{quest.statusLabel}}</span>
-            {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
+          <button type="button" class="ewqm-quest-thumbnail" data-action="open-quest-sheet" data-quest-id="{{quest.id}}" aria-label="Open commission: {{quest.title}}">
+            <img src="{{quest.thumbnailPath}}" alt="{{quest.thumbnailAlt}}" width="570" height="701">
+          </button>
+          <div class="ewqm-thumbnail-caption">
+            <div class="ewqm-thumbnail-status">
+              <span class="ewqm-status-label">{{quest.statusLabel}}</span>
+              {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
+            </div>
+            <h3>{{quest.title}}</h3>
+            <p>{{#if ../isPlayer}}Open the posting to read the full commission and vote.{{else}}Open the full commission sheet.{{/if}}</p>
           </div>
-          <h3>{{quest.title}}</h3>
-          <section class="ewqm-objective">
-            <h4>Objective</h4>
-            <p class="ewqm-description">{{quest.description}}</p>
-          </section>
-          {{#if quest.hasPublicDetails}}
-            <p class="ewqm-quest-meta">
-              {{#if quest.categoryLabel}}<span>{{quest.categoryLabel}}</span>{{/if}}
-              {{#if quest.urgencyLabel}}<span>{{quest.urgencyLabel}}</span>{{/if}}
-              {{#if quest.rewardLabel}}<span>Reward: {{quest.rewardLabel}}</span>{{/if}}
-            </p>
-          {{/if}}
 
-          {{#if quest.hasClerkNote}}
-            <section class="ewqm-clerk-note {{#if quest.isAccepted}}ewqm-clerk-note--accepted{{/if}}" aria-label="Additional details by guild clerk">
-              <h4>Additional details by guild clerk</h4>
-              <p>{{quest.clerkNote}}</p>
-              {{#if quest.isAccepted}}
-                <img class="ewqm-accepted-stamp" src="modules/emberwolf-quest-manager/assets/EWAG_Seal.png" alt="Party accepted seal">
-              {{/if}}
-            </section>
-          {{/if}}
-
-          {{#if quest.hasGmNotes}}
-            <aside class="ewqm-gm-notes">
-              <strong>GM only</strong>
-              <p>{{quest.gmNotes}}</p>
-            </aside>
-          {{/if}}
-
-          {{#if ../isPlayer}}
-            <div class="ewqm-party-vote">
-              <p class="ewqm-vote-tally">Party vote: {{quest.voteSummary}}</p>
-              {{#if quest.canVote}}
-                <p class="ewqm-vote-instruction">One vote per player. A strict majority of player accounts decides this commission.</p>
-                <div class="ewqm-vote-actions">
-                  <button type="button" data-action="cast-party-vote" data-quest-id="{{quest.id}}" data-vote="accept" class="ewqm-accept {{#if quest.isMyAccept}}is-selected{{/if}}">
-                    {{#if quest.isMyAccept}}Your vote: Accept{{else}}Accept{{/if}}
-                  </button>
-                  <button type="button" data-action="cast-party-vote" data-quest-id="{{quest.id}}" data-vote="decline" class="ewqm-decline {{#if quest.isMyDecline}}is-selected{{/if}}">
-                    {{#if quest.isMyDecline}}Your vote: Decline{{else}}Decline{{/if}}
-                  </button>
-                </div>
-              {{/if}}
-              {{#if quest.pendingOutcome}}
-                <p class="ewqm-pending-outcome">A majority has voted. The GM client is synchronizing the result.</p>
-              {{/if}}
-            </div>
-          {{else}}
-            <div class="ewqm-gm-vote-summary">
-              <span>Party vote: {{quest.voteSummary}}</span>
-            </div>
+          {{#if ../isGM}}
             <div class="ewqm-card-actions">
               <button type="button" data-action="edit-quest" data-quest-id="{{quest.id}}">Edit</button>
               {{#if quest.canPublish}}<button type="button" data-action="publish-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Publish</button>{{/if}}
@@ -215,7 +171,6 @@
             </div>
             {{#if quest.isDeleteArmed}}<p class="ewqm-delete-confirmation" role="status">Click “Confirm delete” within 8 seconds to permanently remove this quest.</p>{{/if}}
           {{/if}}
-          </div>
         </article>
       {{/each}}
     </div>

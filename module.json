@@ -3,7 +3,7 @@
   "type": "module",
   "title": "EmberWolf Quest Manager",
   "description": "A standalone Adventurer's Guild and procedural quest management module for Foundry Virtual Tabletop v14 and the dnd5e system.",
-  "version": "0.1.0.005",
+  "version": "0.1.0.006",
   "authors": [
     {
       "name": "EmberWolf Games"
@@ -14,7 +14,7 @@
   "license": "LICENSE",
   "readme": "README.md",
   "manifest": "https://raw.githubusercontent.com/EmberWolf-Games/emberwolf-quest-manager/main/module.json",
-  "download": "https://github.com/EmberWolf-Games/emberwolf-quest-manager/releases/download/0.1.0.005/emberwolf-quest-manager.zip",
+  "download": "https://github.com/EmberWolf-Games/emberwolf-quest-manager/releases/download/0.1.0.006/emberwolf-quest-manager.zip",
   "compatibility": {
     "minimum": "14"
   },
