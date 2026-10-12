@@ -1,14 +1,25 @@
 const MODULE_ID = "emberwolf-quest-manager";
 const MEMBER_FLAG = "guildMembership";
 const PARTY_NAME_SETTING = "partyName";
-const XP_PER_RANK_SETTING = "guildXpPerRank";
+const LEGACY_XP_PER_RANK_SETTING = "guildXpPerRank";
 const QUEST_XP_AWARD_SETTING = "guildQuestXpAward";
 const QUEST_XP_PENALTY_SETTING = "guildQuestXpPenalty";
 
 export const GUILD_RANKS = Object.freeze(["G", "F", "E", "D", "C", "B", "A", "S"]);
+const RANK_XP_SETTINGS = Object.freeze([
+  { key: "guildXpGtoF", from: "G", to: "F", default: 100 },
+  { key: "guildXpFtoE", from: "F", to: "E", default: 150 },
+  { key: "guildXpEtoD", from: "E", to: "D", default: 200 },
+  { key: "guildXpDtoC", from: "D", to: "C", default: 250 },
+  { key: "guildXpCtoB", from: "C", to: "B", default: 300 },
+  { key: "guildXpBtoA", from: "B", to: "A", default: 400 },
+  { key: "guildXpAtoS", from: "A", to: "S", default: 500 }
+]);
+
+export const GUILD_RANK_XP_SETTING_KEYS = Object.freeze(RANK_XP_SETTINGS.map(setting => setting.key));
 
 export const DEFAULT_GUILD_RULES = Object.freeze({
-  xpPerRank: 100,
+  rankXpCurve: Object.freeze(RANK_XP_SETTINGS.map(setting => setting.default)),
   questXpAward: 25,
   questXpPenalty: 10
 });
@@ -22,14 +33,25 @@ export function registerGuildSettings() {
     type: String,
     default: ""
   });
-  game.settings.register(MODULE_ID, XP_PER_RANK_SETTING, {
-    name: "Guild XP Required per Rank",
-    hint: "Provisional number of guild experience points needed to advance one rank.",
+  game.settings.register(MODULE_ID, LEGACY_XP_PER_RANK_SETTING, {
+    name: "Legacy Guild XP Required per Rank",
+    hint: "Retained for compatibility with older worlds. Guild ranks now use the configurable progression curve.",
     scope: "world",
     config: false,
     type: Number,
-    default: DEFAULT_GUILD_RULES.xpPerRank
+    default: 100
   });
+  for (const [index, setting] of RANK_XP_SETTINGS.entries()) {
+    game.settings.register(MODULE_ID, setting.key, {
+      name: "Guild Rank XP — " + setting.from + " to " + setting.to,
+      hint: "Guild XP required to advance from " + setting.from + " to " + setting.to + ". Changing the curve recalculates ranks from each character's saved total Guild XP.",
+      scope: "world",
+      config: true,
+      type: Number,
+      range: { min: 1, max: 1000000, step: 1 },
+      default: DEFAULT_GUILD_RULES.rankXpCurve[index]
+    });
+  }
   game.settings.register(MODULE_ID, QUEST_XP_AWARD_SETTING, {
     name: "Guild XP for Completed Quest",
     hint: "Provisional guild experience awarded to each enrolled party character when a quest is completed.",
@@ -51,7 +73,9 @@ export function registerGuildSettings() {
 export function getGuildSettings() {
   return {
     partyName: cleanText(game.settings.get(MODULE_ID, PARTY_NAME_SETTING), 80),
-    xpPerRank: readPositiveSetting(XP_PER_RANK_SETTING, DEFAULT_GUILD_RULES.xpPerRank),
+    rankXpCurve: RANK_XP_SETTINGS.map((setting, index) =>
+      readPositiveSetting(setting.key, DEFAULT_GUILD_RULES.rankXpCurve[index])
+    ),
     questXpAward: readPositiveSetting(QUEST_XP_AWARD_SETTING, DEFAULT_GUILD_RULES.questXpAward),
     questXpPenalty: readNonnegativeSetting(QUEST_XP_PENALTY_SETTING, DEFAULT_GUILD_RULES.questXpPenalty)
   };
@@ -61,13 +85,11 @@ export async function saveGuildSettings(fields) {
   requireGM();
   const settings = {
     partyName: cleanText(fields.partyName, 80),
-    xpPerRank: parseIntegerSetting(fields.xpPerRank, "Guild XP required per rank", 1),
     questXpAward: parseIntegerSetting(fields.questXpAward, "Guild XP for a completed quest", 1),
     questXpPenalty: parseIntegerSetting(fields.questXpPenalty, "Guild XP penalty for a failed quest", 0)
   };
 
   await game.settings.set(MODULE_ID, PARTY_NAME_SETTING, settings.partyName);
-  await game.settings.set(MODULE_ID, XP_PER_RANK_SETTING, settings.xpPerRank);
   await game.settings.set(MODULE_ID, QUEST_XP_AWARD_SETTING, settings.questXpAward);
   await game.settings.set(MODULE_ID, QUEST_XP_PENALTY_SETTING, settings.questXpPenalty);
   return settings;
@@ -111,8 +133,12 @@ export function getCharacterGuildProfile(actor) {
   };
 }
 
-export async function joinGuild(actor, fields) {
-  requirePlayerOwner(actor);
+export async function joinGuild(actor, fields, { gmViewAsPlayer = false } = {}) {
+  if (game.user?.isGM && gmViewAsPlayer) {
+    if (actor?.type !== "character") throw new Error("Only a character can join the guild.");
+  } else {
+    requirePlayerOwner(actor);
+  }
   if (getGuildMember(actor)) throw new Error("This character already has a guild card.");
 
   const defaults = getCharacterGuildProfile(actor);
@@ -137,10 +163,17 @@ export async function joinGuild(actor, fields) {
   return membership;
 }
 
-export function getGuildRankProgress(guildExperience, xpPerRank = getGuildSettings().xpPerRank) {
+export function getGuildRankProgress(guildExperience, rankXpCurve = getGuildSettings().rankXpCurve) {
   const total = Math.max(0, Math.trunc(Number(guildExperience) || 0));
-  const perRank = Math.max(1, Math.trunc(Number(xpPerRank) || DEFAULT_GUILD_RULES.xpPerRank));
-  const rankIndex = Math.min(GUILD_RANKS.length - 1, Math.floor(total / perRank));
+  const curve = normalizeRankXpCurve(rankXpCurve);
+  const thresholds = [0];
+  for (const required of curve) thresholds.push(thresholds.at(-1) + required);
+
+  let rankIndex = 0;
+  for (let index = 1; index < thresholds.length; index++) {
+    if (total < thresholds[index]) break;
+    rankIndex = index;
+  }
   const rank = GUILD_RANKS[rankIndex];
   const isMaxRank = rankIndex === GUILD_RANKS.length - 1;
 
@@ -148,10 +181,41 @@ export function getGuildRankProgress(guildExperience, xpPerRank = getGuildSettin
     rank,
     rankIndex,
     isMaxRank,
-    current: isMaxRank ? null : total - (rankIndex * perRank),
-    required: isMaxRank ? null : perRank,
+    current: isMaxRank ? null : total - thresholds[rankIndex],
+    required: isMaxRank ? null : curve[rankIndex],
+    rankStartExperience: thresholds[rankIndex],
     total
   };
+}
+
+export function getGuildRankStartExperience(rank, rankXpCurve = getGuildSettings().rankXpCurve) {
+  const rankIndex = GUILD_RANKS.indexOf(String(rank ?? "").trim().toUpperCase());
+  if (rankIndex < 0) throw new Error("Choose a valid guild rank from G through S.");
+  return normalizeRankXpCurve(rankXpCurve)
+    .slice(0, rankIndex)
+    .reduce((total, required) => total + required, 0);
+}
+
+export async function setGuildRank(actor, rank) {
+  requireGM();
+  if (actor?.type !== "character") throw new Error("Only a character can have an adventurer guild rank.");
+
+  const profile = getCharacterGuildProfile(actor);
+  if (!profile.name) throw new Error("This character needs a name before a guild rank can be assigned.");
+
+  const now = Date.now();
+  const membership = getGuildMember(actor) ?? {
+    schemaVersion: 1,
+    joinedAt: now,
+    profile,
+    guildExperience: 0,
+    resolvedQuestIds: [],
+    resolvedQuestOutcomes: {}
+  };
+  membership.guildExperience = getGuildRankStartExperience(rank);
+  membership.updatedAt = now;
+  await actor.setFlag(MODULE_ID, MEMBER_FLAG, membership);
+  return membership;
 }
 
 export async function applyGuildQuestOutcome(actor, questId, outcome) {
@@ -190,8 +254,8 @@ export async function applyGuildQuestOutcome(actor, questId, outcome) {
     previousExperience,
     guildExperience,
     change: guildExperience - previousExperience,
-    rankBefore: getGuildRankProgress(previousExperience, settings.xpPerRank).rank,
-    rankAfter: getGuildRankProgress(guildExperience, settings.xpPerRank).rank
+    rankBefore: getGuildRankProgress(previousExperience, settings.rankXpCurve).rank,
+    rankAfter: getGuildRankProgress(guildExperience, settings.rankXpCurve).rank
   };
 }
 
@@ -225,7 +289,7 @@ function readText(value, maximumLength) {
 
 function readPositiveSetting(key, fallback) {
   const value = Number(game.settings.get(MODULE_ID, key));
-  return Number.isInteger(value) && value > 0 ? value : fallback;
+  return Number.isInteger(value) && value > 0 && value <= 1000000 ? value : fallback;
 }
 
 function readNonnegativeSetting(key, fallback) {
@@ -254,6 +318,14 @@ function requirePlayerOwner(actor) {
   }
 }
 
+function normalizeRankXpCurve(rankXpCurve) {
+  const source = Array.isArray(rankXpCurve) ? rankXpCurve : DEFAULT_GUILD_RULES.rankXpCurve;
+  return DEFAULT_GUILD_RULES.rankXpCurve.map((fallback, index) => {
+    const required = Number(source[index]);
+    return Number.isInteger(required) && required > 0 && required <= 1000000 ? required : fallback;
+  });
+}
+
 function emptyProfile() {
   return { name: "", className: "", level: "", age: "", gender: "", race: "" };
 }
@@ -261,3 +333,4 @@ function emptyProfile() {
 function cleanText(value, maximumLength) {
   return String(value ?? "").trim().slice(0, maximumLength);
 }
+
