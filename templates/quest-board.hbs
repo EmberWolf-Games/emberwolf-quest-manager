@@ -145,6 +145,7 @@
     <div class="ewqm-quest-list">
       {{#each quests as |quest|}}
         <article class="ewqm-quest-card ewqm-status-{{quest.statusClass}}">
+          <div class="ewqm-card-content">
           <div class="ewqm-card-topline">
             <span class="ewqm-status-label">{{quest.statusLabel}}</span>
             {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
@@ -214,6 +215,7 @@
             </div>
             {{#if quest.isDeleteArmed}}<p class="ewqm-delete-confirmation" role="status">Click “Confirm delete” within 8 seconds to permanently remove this quest.</p>{{/if}}
           {{/if}}
+          </div>
         </article>
       {{/each}}
     </div>
