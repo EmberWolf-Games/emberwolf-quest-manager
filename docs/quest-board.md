@@ -28,5 +28,5 @@ These rules are the initial implementation choice for a party-wide vote. Explici
 - Reward values are provisional. Deadlines, quest refresh, and automatic completion or failure are not included.
 - The handwritten appearance uses system cursive fonts when available and a browser cursive fallback. No external font service is required.
 - The board displays the guild's unsealed job thumbnail at about one quarter of its previous on-screen size (143 × 175 CSS pixels), with a compact gallery that remains visible while the GM settings pane scrolls independently. A party-accepted quest switches to the sealed thumbnail.
-- Selecting a thumbnail opens a separate 600 × 790 Foundry window with the parchment displayed at 543 × 724 CSS pixels. Player windows include public details and party voting; GM windows may also show private GM notes.
+- Selecting a thumbnail opens a separate 550 × 700 Foundry window with the parchment displayed at 480 × 640 CSS pixels, sized to fit within the 1280 × 720 Foundry view used during review. Player windows include public details and party voting; GM windows may also show private GM notes.
 - The vote result is limited to the board status. It does not create a dnd5e quest tracker entry or distribute rewards.
