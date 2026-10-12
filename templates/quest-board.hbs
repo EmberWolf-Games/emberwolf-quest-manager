@@ -2,6 +2,7 @@
   <div class="ewqm-board-controls">
     <header class="ewqm-masthead">
       <p class="ewqm-guild-name">Emberwolf Adventurers' Guild</p>
+      <p class="ewqm-party-name">{{#if hasPartyName}}{{partyName}}{{else}}Company name not yet set{{/if}}</p>
       <h1>Quest Board</h1>
       <p class="ewqm-intro">
         {{#if isGM}}
@@ -13,6 +14,34 @@
     </header>
 
   {{#if isGM}}
+    <details class="ewqm-editor ewqm-guild-settings" open>
+      <summary>Party identity and guild experience</summary>
+      <form data-guild-settings-form autocomplete="off">
+        <label class="ewqm-field">
+          <span>Party name shown to players</span>
+          <input name="partyName" maxlength="80" value="{{partyName}}" placeholder="Name your adventuring company">
+        </label>
+        <div class="ewqm-generator-fields ewqm-guild-xp-fields">
+          <label class="ewqm-field">
+            <span>Guild XP per rank</span>
+            <input name="xpPerRank" type="number" min="1" max="1000000" step="1" required value="{{guildXpPerRank}}">
+          </label>
+          <label class="ewqm-field">
+            <span>XP for a completed quest</span>
+            <input name="questXpAward" type="number" min="1" max="1000000" step="1" required value="{{guildQuestXpAward}}">
+          </label>
+          <label class="ewqm-field">
+            <span>XP lost for a failed quest</span>
+            <input name="questXpPenalty" type="number" min="0" max="1000000" step="1" required value="{{guildQuestXpPenalty}}">
+          </label>
+        </div>
+        <div class="ewqm-editor-actions">
+          <button type="button" data-action="save-guild-settings" class="ewqm-primary">Save party settings</button>
+        </div>
+        <p class="ewqm-security-note">These are provisional starter values. XP changes apply to enrolled characters saved in the party roster when each quest is posted. Closing a commission does not award or remove XP.</p>
+      </form>
+    </details>
+
     <details class="ewqm-editor ewqm-generator" open>
       <summary>Generate quest drafts</summary>
       <p class="ewqm-generator-intro">Choose the party roster and generation settings. Each draft combines compatible category pools for an action, quantity, target, and payout. Generated quests are saved privately for your review; publishing is a separate step.</p>
@@ -165,6 +194,11 @@
                 <button type="button" data-action="edit-quest" data-quest-id="{{quest.id}}">Edit</button>
                 {{#if quest.canPublish}}<button type="button" data-action="publish-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Publish</button>{{/if}}
                 {{#if quest.canClose}}<button type="button" data-action="close-quest" data-quest-id="{{quest.id}}" class="ewqm-danger">Close</button>{{/if}}
+                {{#if quest.canResolve}}
+                  <button type="button" data-action="resolve-quest" data-outcome="completed" data-quest-id="{{quest.id}}" class="ewqm-primary">Mark completed · +{{../guildQuestXpAward}} XP</button>
+                  <button type="button" data-action="resolve-quest" data-outcome="failed" data-quest-id="{{quest.id}}" class="ewqm-danger">Mark failed · −{{../guildQuestXpPenalty}} XP</button>
+                  {{#if quest.hasParticipantSnapshot}}<small>{{quest.participantCount}} selected character(s) saved with this posting.</small>{{else}}<small>No party roster was saved with this quest; enrolled characters may receive no XP.</small>{{/if}}
+                {{/if}}
                 {{#if quest.canReopen}}<button type="button" data-action="reopen-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Reopen vote</button>{{/if}}
                 {{#if quest.canDelete}}
                   <button type="button" data-action="delete-quest" data-quest-id="{{quest.id}}" class="ewqm-danger ewqm-delete" aria-pressed="{{quest.isDeleteArmed}}">

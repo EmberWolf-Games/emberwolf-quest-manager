@@ -10,7 +10,7 @@ const distributionPath = path.join(repositoryRoot, "dist");
 const packagePath = path.join(distributionPath, "package");
 const archivePath = path.join(distributionPath, "emberwolf-quest-manager.zip");
 const repository = process.env.GITHUB_REPOSITORY;
-const tag = process.env.GITHUB_REF_NAME;
+const tag = process.env.RELEASE_TAG ?? process.env.GITHUB_REF_NAME;
 const commit = process.env.GITHUB_SHA;
 
 function fail(message) {
@@ -20,7 +20,7 @@ function fail(message) {
 if (!repository || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
   fail("GITHUB_REPOSITORY must be set to owner/repository.");
 }
-if (!tag) fail("GITHUB_REF_NAME must contain the release tag.");
+if (!tag) fail("RELEASE_TAG must contain the release version.");
 if (!commit) fail("GITHUB_SHA must identify the tagged commit.");
 
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
@@ -54,6 +54,36 @@ const { stdout: mainManifestJson } = await execFileAsync("git", ["show", "origin
 const mainManifest = JSON.parse(mainManifestJson);
 if (mainManifest.version !== tag) {
   fail(`main currently advertises '${mainManifest.version}', not tagged version '${tag}'. Publish versions in order.`);
+}
+
+let previousMainManifest;
+try {
+  const { stdout } = await execFileAsync("git", ["show", "origin/main^:module.json"]);
+  previousMainManifest = JSON.parse(stdout);
+} catch {
+  fail("Could not read the previous main version to verify the build sequence.");
+}
+
+const previousMatch = /^(0|1)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(\d{3})$/.exec(previousMainManifest.version ?? "");
+if (!previousMatch || previousMatch[4] === "000") {
+  fail(`Previous main version '${previousMainManifest.version}' does not use R.M.m.b.`);
+}
+const previousMajor = Number(previousMatch[2]);
+const previousRelease = Number(previousMatch[1]);
+const nextRelease = Number(versionMatch[1]);
+const nextMajor = Number(versionMatch[2]);
+const previousBuild = Number(previousMatch[4]);
+const nextBuild = Number(versionMatch[4]);
+if (nextMajor < previousMajor) {
+  fail(`Major line cannot decrease from ${previousMajor} to ${nextMajor}.`);
+}
+if (nextRelease < previousRelease) {
+  fail(`Release phase cannot decrease from ${previousRelease} to ${nextRelease}.`);
+}
+if (nextMajor > previousMajor) {
+  if (nextBuild !== 1) fail("The build number must reset to 001 after a major version increase.");
+} else if (nextBuild !== previousBuild + 1) {
+  fail(`Build number must increase from ${previousMatch[4]} to ${String(previousBuild + 1).padStart(3, "0")} unless the major line increases.`);
 }
 
 await rm(packagePath, { recursive: true, force: true });

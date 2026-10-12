@@ -2,7 +2,7 @@
 
 A standalone, open-source Adventurer's Guild and procedural quest management module for **Foundry Virtual Tabletop v14** and the **dnd5e** game system.
 
-> **Status: early implementation.** The module includes a GM-facing procedural draft generator, quest publication and closure, a parchment-style player board, and party voting. Generator pools, feasibility estimates, and payouts use provisional starter values. Deadlines are not implemented. Compatibility is being checked in Foundry v14 with dnd5e.
+> **Status: early implementation.** The module includes a GM-facing procedural draft generator, quest publication and party voting, per-character guild membership cards and rank experience, a shared party name, and a parchment-style player board. Generator pools, feasibility estimates, payouts, and guild XP use provisional starter values. Deadlines are not implemented. Compatibility is being checked in Foundry v14 with dnd5e.
 
 ## Goals
 
@@ -21,6 +21,7 @@ Examples such as `Collect 2d4 Silver Ore`, `Kill 2d6 Goblins`, and `Escort a nam
 - [Initial functional specification](SPECIFICATION.md)
 - [Architecture boundaries](docs/architecture.md)
 - [Quest board behavior](docs/quest-board.md)
+- [Guild membership cards and rank experience](docs/guild-membership.md)
 - [Procedural generation and provisional balancing](docs/quest-generation.md)
 - [Optional Gemini guild-clerk notes](docs/gemini-clerk-notes.md)
 - [Versioning and releases](VERSIONING.md)
@@ -34,7 +35,7 @@ No build, test, or lint commands are defined yet. See the quest board behavior d
 
 ## Releases and updates
 
-The package uses `R.M.m.b` versions; see [VERSIONING.md](VERSIONING.md). After a matching version change is merged to `main`, pushing the exact version tag runs `.github/workflows/release.yml`. The workflow publishes a module ZIP and a Foundry manifest. Install or update using this stable manifest URL:
+The package uses `R.M.m.b` versions; see [VERSIONING.md](VERSIONING.md). Merging a new version in `module.json` to `main` automatically creates the matching tag and GitHub release through `.github/workflows/release.yml`. The workflow publishes a module ZIP and a Foundry manifest. Install or update using this stable manifest URL:
 
 `https://raw.githubusercontent.com/EmberWolf-Games/emberwolf-quest-manager/main/module.json`
 

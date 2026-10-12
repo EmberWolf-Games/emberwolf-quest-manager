@@ -1,3 +1,5 @@
+import { applyGuildQuestOutcome } from "./guild-store.mjs";
+
 const MODULE_ID = "emberwolf-quest-manager";
 const PUBLIC_QUESTS_SETTING = "publishedQuests";
 const PARTY_ROSTER_SETTING = "partyRoster";
@@ -22,7 +24,7 @@ export function registerQuestSettings() {
   });
   game.settings.register(MODULE_ID, PARTY_ROSTER_SETTING, {
     name: "Quest Generator Party Roster",
-    hint: "World character IDs explicitly selected by a Gamemaster for party-level quest generation.",
+    hint: "World character IDs explicitly selected by a Gamemaster for party-level quest generation and guild XP participation.",
     scope: "world",
     config: false,
     type: String,
@@ -216,6 +218,7 @@ export async function publishQuest(questId) {
   if (!record) throw new Error("That quest draft could not be found.");
   if (record.status === "available") return record;
   record.status = "available";
+  record.participantActorIds = readPartyRosterIds();
   record.voteRoundId = foundry.utils.randomID();
   record.updatedAt = Date.now();
   await persistPrivateQuest(record);
@@ -248,12 +251,59 @@ export async function reopenQuest(questId) {
   requireGM();
   const record = await getPrivateQuest(questId);
   if (!record) throw new Error("That quest could not be found.");
+  if (["completed", "failed"].includes(record.status)) {
+    throw new Error("A completed or failed quest cannot be reopened because its guild experience has already been resolved.");
+  }
   record.status = "available";
+  record.participantActorIds = readPartyRosterIds();
   record.voteRoundId = foundry.utils.randomID();
   record.updatedAt = Date.now();
   await persistPrivateQuest(record);
   await syncPublicQuests();
   return record;
+}
+
+export async function resolveQuestOutcome(questId, outcome) {
+  requireGM();
+  if (outcome !== "completed" && outcome !== "failed") {
+    throw new Error("Choose whether the quest was completed or failed.");
+  }
+
+  const record = await getPrivateQuest(questId);
+  if (!record) throw new Error("That quest could not be found.");
+  if (record.status !== "accepted") {
+    throw new Error("Only a party-accepted quest can be marked completed or failed.");
+  }
+
+  // New postings retain their selected party snapshot; legacy quests use the current roster.
+  const participantIds = Array.isArray(record.participantActorIds)
+    ? [...new Set(record.participantActorIds.map(String))]
+    : readPartyRosterIds();
+  const actors = new Map(game.actors.contents.map(actor => [actor.id, actor]));
+  const results = [];
+  for (const id of participantIds) {
+    const actor = actors.get(id);
+    if (actor?.type !== "character") continue;
+    const result = await applyGuildQuestOutcome(actor, record.id, outcome);
+    results.push({ actor, ...result });
+  }
+
+  record.status = outcome;
+  record.resolvedAt = Date.now();
+  record.guildExperienceOutcome = {
+    type: outcome,
+    participantActorIds: participantIds,
+    enrolledCharacters: results.filter(result => result.applied || result.reason === "already-applied").length
+  };
+  record.updatedAt = Date.now();
+  await persistPrivateQuest(record);
+  await syncPublicQuests();
+
+  return {
+    record,
+    outcome,
+    results: results.map(({ actor, ...result }) => ({ actorName: actor.name, ...result }))
+  };
 }
 
 export async function castPartyVote(questId, choice) {
