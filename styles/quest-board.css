@@ -743,7 +743,6 @@
   top: 31.2%;
   width: 44.5%;
   height: 5.2%;
-  border-bottom: 1px solid rgb(49 31 19 / 82%);
   font-size: clamp(0.9rem, 3.1cqw, 1.08rem);
   font-weight: 700;
 }
@@ -900,3 +899,4 @@
     font-size: 1.65rem;
   }
 }
+

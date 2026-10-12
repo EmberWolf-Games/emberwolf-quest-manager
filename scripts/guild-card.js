@@ -17,10 +17,10 @@ export function registerGuildCardHooks() {
     const actor = application.document?.documentName === "Actor"
       ? application.document
       : application.actor;
-    if (!canPlayerOpenGuildCard(actor)) return;
+    if (!canUserViewGuildCard(actor)) return;
 
     addGuildCardHeaderButton(element, actor);
-    if (!getGuildMember(actor) && !enrollmentCards.has(actor.uuid)) {
+    if (canPlayerEnrollGuildCard(actor) && !getGuildMember(actor) && !enrollmentCards.has(actor.uuid)) {
       enrollmentCards.add(actor.uuid);
       openGuildCard(actor).catch(error => {
         enrollmentCards.delete(actor.uuid);
@@ -81,7 +81,7 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
 
   async _prepareContext() {
     const actor = await fromUuid(this.actorUuid);
-    if (!canPlayerOpenGuildCard(actor)) return { isMissing: true };
+    if (!canUserViewGuildCard(actor)) return { isMissing: true };
 
     const membership = getGuildMember(actor);
     const settings = getGuildSettings();
@@ -92,7 +92,9 @@ export class GuildCardApplication extends HandlebarsApplicationMixin(Application
 
     return {
       isMissing: false,
-      isEnrollment: !membership,
+      isEnrollment: !membership && canPlayerEnrollGuildCard(actor),
+      hasMembership: Boolean(membership),
+      backgroundImagePath: cardBackgroundPath(Boolean(membership)),
       name: profile.name ?? "",
       className: profile.className ?? "",
       level: level ? String(level) : "",
@@ -143,7 +145,12 @@ async function openGuildCard(actor) {
   await application.render({ force: true });
 }
 
-function canPlayerOpenGuildCard(actor) {
+function canUserViewGuildCard(actor) {
+  if (!game.user || actor?.type !== "character") return false;
+  return game.user.isGM || canPlayerEnrollGuildCard(actor);
+}
+
+function canPlayerEnrollGuildCard(actor) {
   if (!game.user || game.user.isGM || game.user.role >= CONST.USER_ROLES.ASSISTANT) return false;
   return actor?.type === "character"
     && actor.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER);
@@ -163,8 +170,9 @@ function addGuildCardHeaderButton(element, actor) {
   button.type = "button";
   button.className = "ewqm-guild-card-trigger gold-button";
   button.dataset.ewqmGuildCardTrigger = "true";
-  button.title = membership ? "View guild card — rank " + rank : "Review and join the Adventuring Guild";
-  button.setAttribute("aria-label", membership ? "View guild card, rank " + rank : "Join the Adventuring Guild");
+  const label = guildCardButtonLabel(membership, rank);
+  button.title = label;
+  button.setAttribute("aria-label", label);
   renderGuildCardButtonContents(button, membership, rank);
 
   button.addEventListener("click", event => {
@@ -190,8 +198,9 @@ function refreshGuildCardHeader(actor) {
     if (!button) continue;
     const membership = getGuildMember(actor);
     const rank = membership ? getGuildRankProgress(membership.guildExperience).rank : "";
-    button.title = membership ? "View guild card — rank " + rank : "Review and join the Adventuring Guild";
-    button.setAttribute("aria-label", membership ? "View guild card, rank " + rank : "Join the Adventuring Guild");
+    const label = guildCardButtonLabel(membership, rank);
+    button.title = label;
+    button.setAttribute("aria-label", label);
     renderGuildCardButtonContents(button, membership, rank);
   }
 }
@@ -211,6 +220,19 @@ function renderGuildCardButtonContents(button, membership, rank) {
   button.append(icon);
 }
 
+function guildCardButtonLabel(membership, rank) {
+  if (membership) return "View guild card, rank " + rank;
+  return game.user?.isGM
+    ? "Preview unregistered guild card"
+    : "Review and join the Adventuring Guild";
+}
+
 function rankImagePath(rank) {
   return "modules/" + MODULE_ID + "/assets/guild/EWAG_" + rank + ".png";
 }
+
+function cardBackgroundPath(hasMembership) {
+  const asset = hasMembership ? "EWAG_GuildCard_Sealed_Blank.png" : "EWAG_GuildCard_Blank.png";
+  return "modules/" + MODULE_ID + "/assets/guild/" + asset;
+}
+

@@ -4,7 +4,7 @@
   {{else}}
     {{#if isEnrollment}}<form data-guild-enrollment-form autocomplete="off">{{/if}}
       <article class="ewqm-guild-card-page" aria-label="EmberWolf Adventuring Guild membership card">
-        <img class="ewqm-guild-card-background" src="modules/emberwolf-quest-manager/assets/guild/EWAG_GuildCard_Blank.png" alt="" aria-hidden="true">
+        <img class="ewqm-guild-card-background" src="{{backgroundImagePath}}" alt="" aria-hidden="true">
 
         {{#if isEnrollment}}
           <label class="ewqm-guild-card-value ewqm-card-name">
@@ -37,8 +37,10 @@
           <div class="ewqm-guild-card-value ewqm-card-level" aria-label="Character level">{{level}}</div>
           <div class="ewqm-guild-card-value ewqm-card-gender">{{gender}}</div>
           <div class="ewqm-guild-card-value ewqm-card-race">{{race}}</div>
-          <img class="ewqm-guild-card-rank" src="{{rankImage}}" alt="Guild rank {{rank}}">
-          <div class="ewqm-guild-card-experience">Guild XP<br><strong>{{experienceLabel}}</strong></div>
+          {{#if hasMembership}}
+            <img class="ewqm-guild-card-rank" src="{{rankImage}}" alt="Guild rank {{rank}}">
+            <div class="ewqm-guild-card-experience">Guild XP<br><strong>{{experienceLabel}}</strong></div>
+          {{/if}}
         {{/if}}
       </article>
 
@@ -51,8 +53,13 @@
           </div>
         </div>
       {{else}}
-        <p class="ewqm-guild-card-lock-note">Guild information is saved to this character. Level follows the character sheet; guild XP determines rank.</p>
+        {{#if hasMembership}}
+          <p class="ewqm-guild-card-lock-note">Guild information is saved to this character. Level follows the character sheet; guild XP determines rank.</p>
+        {{else}}
+          <p class="ewqm-guild-card-lock-note">This character has not joined the guild. The character's player can review and join when opening their sheet.</p>
+        {{/if}}
       {{/if}}
     {{#if isEnrollment}}</form>{{/if}}
   {{/if}}
 </section>
+
