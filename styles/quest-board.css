@@ -665,6 +665,57 @@
   display: contents;
 }
 
+.ewqm-guild-card-gm-tools {
+  display: flex;
+  width: min(533px, 100%);
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  color: #d6c09a;
+  font-size: 0.72rem;
+}
+
+.ewqm-guild-card-gm-tools button {
+  min-height: 1.65rem;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.72rem;
+}
+
+.ewqm-guild-card-shell form.ewqm-guild-card-rank-tools {
+  display: grid;
+  width: min(533px, 100%);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.4rem 0.55rem;
+  color: #e3d1b1;
+}
+
+.ewqm-guild-card-rank-tools label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+}
+
+.ewqm-guild-card-rank-tools select {
+  width: 100%;
+  min-height: 2rem;
+  border: 1px solid #9c7a4d;
+  border-radius: 0.25rem;
+  padding: 0.3rem 0.5rem;
+  background: #efe0bd;
+  color: #332419;
+  font: 0.84rem var(--font-primary, Georgia, serif);
+}
+
+.ewqm-guild-card-rank-tools p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #d6c09a;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .ewqm-guild-card-page {
   position: relative;
   width: min(533px, 100%);
