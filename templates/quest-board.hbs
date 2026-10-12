@@ -149,7 +149,6 @@
             <span class="ewqm-status-label">{{quest.statusLabel}}</span>
             {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
           </div>
-          <div class="ewqm-card-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></div>
           <h3>{{quest.title}}</h3>
           <section class="ewqm-objective">
             <h4>Objective</h4>
@@ -164,10 +163,12 @@
           {{/if}}
 
           {{#if quest.hasClerkNote}}
-            <section class="ewqm-clerk-note" aria-label="Additional details by guild clerk">
+            <section class="ewqm-clerk-note {{#if quest.isAccepted}}ewqm-clerk-note--accepted{{/if}}" aria-label="Additional details by guild clerk">
               <h4>Additional details by guild clerk</h4>
               <p>{{quest.clerkNote}}</p>
-              <span class="ewqm-guild-seal" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+              {{#if quest.isAccepted}}
+                <img class="ewqm-accepted-stamp" src="modules/emberwolf-quest-manager/assets/EWAG_Seal.png" alt="Party accepted seal">
+              {{/if}}
             </section>
           {{/if}}
 

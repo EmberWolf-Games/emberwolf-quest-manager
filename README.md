@@ -28,7 +28,7 @@ Examples such as `Collect 2d4 Silver Ore`, `Kill 2d6 Goblins`, and `Escort a nam
 
 ## Development install
 
-Copy `module.json`, `scripts/`, `templates/`, `styles/`, `README.md`, and `LICENSE` into a folder named `emberwolf-quest-manager` under Foundry's user data `Data/modules/` directory. Reload the world after updating files. In the canvas, open the scroll icon in the token controls to access the quest board.
+Copy `module.json`, `scripts/`, `templates/`, `styles/`, `assets/`, `README.md`, and `LICENSE` into a folder named `emberwolf-quest-manager` under Foundry's user data `Data/modules/` directory. Reload the world after updating files. In the canvas, open the scroll icon in the token controls to access the quest board.
 
 No build, test, or lint commands are defined yet. See the quest board behavior document for the current vote rules and limits.
 

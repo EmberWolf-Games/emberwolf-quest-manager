@@ -278,29 +278,27 @@
 
 .ewqm-quest-card {
   position: relative;
-  overflow: hidden;
-  padding: 1rem 1.05rem 0.9rem;
-  border: 1px solid #80552e;
-  border-radius: 0.65rem 0.22rem 0.48rem 0.3rem / 0.3rem 0.58rem 0.27rem 0.62rem;
-  background-color: var(--ewqm-paper);
-  background-image:
-    radial-gradient(ellipse at 7% 10%, rgb(255 247 214 / 58%), transparent 35%),
-    radial-gradient(ellipse at 93% 87%, rgb(163 112 49 / 19%), transparent 40%),
-    radial-gradient(circle at 91% 18%, rgb(111 69 37 / 11%) 0 2px, transparent 3px),
-    radial-gradient(ellipse at 5% 81%, rgb(111 69 37 / 10%) 0 4px, transparent 5px),
-    repeating-linear-gradient(3deg, rgb(123 87 43 / 3%) 0 1px, transparent 1px 5px),
-    linear-gradient(127deg, var(--ewqm-paper-light), var(--ewqm-paper) 55%, #e6cd8d);
-  box-shadow: 0 4px 11px rgb(0 0 0 / 35%), inset 0 0 27px rgb(111 69 37 / 19%);
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  padding: clamp(9.5rem, 48%, 16rem) clamp(1.65rem, 8%, 3.1rem) 2.2rem;
+  border: 0;
+  background: transparent;
   color: var(--ewqm-ink);
 }
 
 .ewqm-quest-card::before {
   position: absolute;
-  inset: 0.32rem;
-  border: 1px solid rgb(107 73 36 / 28%);
-  border-radius: 0.12rem 0.25rem 0.15rem 0.2rem;
+  z-index: 0;
+  inset: 0;
+  background: url("../assets/EWAG_Parchment.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 9px rgb(0 0 0 / 38%));
   content: "";
   pointer-events: none;
+}
+
+.ewqm-quest-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .ewqm-card-topline,
@@ -330,35 +328,12 @@
   text-transform: none;
 }
 
-.ewqm-card-crest {
-  position: relative;
-  display: grid;
-  height: 2.45rem;
-  margin: 0.22rem 0 0.3rem;
-  place-items: center;
-  color: #382719;
-  font-size: 1.7rem;
-  text-shadow: 0 1px 0 rgb(255 241 205 / 60%);
-}
-
-.ewqm-card-crest::before {
-  position: absolute;
-  top: 50%;
-  right: 0.15rem;
-  left: 0.15rem;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(73 48 28 / 58%) 18%, rgb(73 48 28 / 58%) 42%, transparent 46%, transparent 54%, rgb(73 48 28 / 58%) 58%, rgb(73 48 28 / 58%) 82%, transparent);
-  content: "";
-}
-
-.ewqm-card-crest i {
-  position: relative;
-  padding: 0 0.75rem;
-  background: #efdda6;
-}
-
 .ewqm-status-label {
   font-weight: 800;
+}
+
+.ewqm-status-accepted .ewqm-status-label {
+  color: #8b2c21;
 }
 
 .ewqm-quest-card h3 {
@@ -426,6 +401,10 @@
   border-bottom: 1px solid rgb(90 62 32 / 35%);
 }
 
+.ewqm-clerk-note--accepted {
+  padding-right: 5.3rem;
+}
+
 .ewqm-clerk-note h4 {
   margin-bottom: 0.12rem;
 }
@@ -440,29 +419,17 @@
   white-space: pre-wrap;
 }
 
-.ewqm-guild-seal {
+.ewqm-accepted-stamp {
   position: absolute;
-  right: 0.25rem;
-  bottom: 0.2rem;
-  display: grid;
-  width: 3.35rem;
-  height: 3.35rem;
-  place-items: center;
-  border: 3px double rgb(132 40 29 / 84%);
-  border-radius: 50%;
-  color: #8d3024;
-  font-size: 1.45rem;
-  opacity: 0.78;
-  transform: rotate(-9deg);
-  box-shadow: 0 0 0 0.2rem rgb(137 43 31 / 12%), inset 0 0 0 2px rgb(132 40 29 / 45%);
-}
-
-.ewqm-guild-seal::before {
-  position: absolute;
-  inset: 0.18rem;
-  border: 1px solid rgb(132 40 29 / 65%);
-  border-radius: 50%;
-  content: "";
+  right: 0.15rem;
+  bottom: -0.35rem;
+  width: 5rem;
+  height: 5rem;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  opacity: 0.84;
+  transform: rotate(-8deg);
+  pointer-events: none;
 }
 
 .ewqm-party-vote,
