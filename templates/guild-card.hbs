@@ -1,0 +1,58 @@
+<section class="ewqm-guild-card-shell">
+  {{#if isMissing}}
+    <div class="ewqm-guild-card-missing">This character is unavailable or is not owned by the current player.</div>
+  {{else}}
+    {{#if isEnrollment}}<form data-guild-enrollment-form autocomplete="off">{{/if}}
+      <article class="ewqm-guild-card-page" aria-label="EmberWolf Adventuring Guild membership card">
+        <img class="ewqm-guild-card-background" src="modules/emberwolf-quest-manager/assets/guild/EWAG_GuildCard_Blank.png" alt="" aria-hidden="true">
+
+        {{#if isEnrollment}}
+          <label class="ewqm-guild-card-value ewqm-card-name">
+            <span class="visually-hidden">Character name</span>
+            <input name="name" maxlength="120" required value="{{name}}" aria-label="Character name">
+          </label>
+          <span class="ewqm-guild-card-age-label">Age:</span>
+          <label class="ewqm-guild-card-value ewqm-card-age">
+            <span class="visually-hidden">Age</span>
+            <input name="age" maxlength="40" value="{{age}}" aria-label="Age">
+          </label>
+          <label class="ewqm-guild-card-value ewqm-card-class">
+            <span class="visually-hidden">Class</span>
+            <input name="className" maxlength="120" value="{{className}}" aria-label="Class">
+          </label>
+          <div class="ewqm-guild-card-value ewqm-card-level" aria-label="Character level">{{level}}</div>
+          <label class="ewqm-guild-card-value ewqm-card-gender">
+            <span class="visually-hidden">Gender</span>
+            <input name="gender" maxlength="40" value="{{gender}}" aria-label="Gender">
+          </label>
+          <label class="ewqm-guild-card-value ewqm-card-race">
+            <span class="visually-hidden">Race</span>
+            <input name="race" maxlength="80" value="{{race}}" aria-label="Race">
+          </label>
+        {{else}}
+          <div class="ewqm-guild-card-value ewqm-card-name">{{name}}</div>
+          <span class="ewqm-guild-card-age-label">Age:</span>
+          <div class="ewqm-guild-card-value ewqm-card-age">{{age}}</div>
+          <div class="ewqm-guild-card-value ewqm-card-class">{{className}}</div>
+          <div class="ewqm-guild-card-value ewqm-card-level" aria-label="Character level">{{level}}</div>
+          <div class="ewqm-guild-card-value ewqm-card-gender">{{gender}}</div>
+          <div class="ewqm-guild-card-value ewqm-card-race">{{race}}</div>
+          <img class="ewqm-guild-card-rank" src="{{rankImage}}" alt="Guild rank {{rank}}">
+          <div class="ewqm-guild-card-experience">Guild XP<br><strong>{{experienceLabel}}</strong></div>
+        {{/if}}
+      </article>
+
+      {{#if isEnrollment}}
+        <div class="ewqm-guild-card-actions">
+          <p>Review the details above. Blank fields may be filled in before joining; the card details are locked after enrollment. Character level stays synced to this sheet.</p>
+          <div>
+            <button type="button" data-action="join-guild" class="ewqm-primary">Join Guild</button>
+            <button type="button" data-action="defer-enrollment">Not now</button>
+          </div>
+        </div>
+      {{else}}
+        <p class="ewqm-guild-card-lock-note">Guild information is saved to this character. Level follows the character sheet; guild XP determines rank.</p>
+      {{/if}}
+    {{#if isEnrollment}}</form>{{/if}}
+  {{/if}}
+</section>

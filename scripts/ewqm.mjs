@@ -1,5 +1,7 @@
 import { openQuestBoard, refreshQuestBoard, refreshQuestSheets } from "./quest-board.js";
 import { registerQuestSettings, resolvePartyVotes } from "./quest-store.mjs";
+import { registerGuildCardHooks, refreshGuildCardViews } from "./guild-card.js";
+import { registerGuildSettings } from "./guild-store.mjs";
 
 const MODULE_ID = "emberwolf-quest-manager";
 let voteResolutionQueue = Promise.resolve();
@@ -19,6 +21,8 @@ function queueVoteResolution() {
 Hooks.once("init", () => {
   ensureStylesheet();
   registerQuestSettings();
+  registerGuildSettings();
+  registerGuildCardHooks();
 
   Hooks.on("getSceneControlButtons", controls => {
     const tokenControls = controls.tokens;
@@ -42,7 +46,18 @@ Hooks.once("init", () => {
     });
 
     Hooks.on("updateSetting", setting => {
-      if ([MODULE_ID + ".publishedQuests", MODULE_ID + ".partyRoster", MODULE_ID + ".geminiRelayUrl"].includes(setting.key)) refreshQuestViews();
+      if ([
+        MODULE_ID + ".publishedQuests",
+        MODULE_ID + ".partyRoster",
+        MODULE_ID + ".geminiRelayUrl",
+        MODULE_ID + ".partyName",
+        MODULE_ID + ".guildXpPerRank",
+        MODULE_ID + ".guildQuestXpAward",
+        MODULE_ID + ".guildQuestXpPenalty"
+      ].includes(setting.key)) {
+        refreshQuestViews();
+        refreshGuildCardViews();
+      }
     });
 
     queueVoteResolution();

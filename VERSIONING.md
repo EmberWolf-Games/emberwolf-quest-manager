@@ -12,7 +12,6 @@ EWQM versions use four dot-separated numeric components: `R.M.m.b`.
 
 1. Set `version` in `module.json` to the next `R.M.m.b` value and set `download` to the matching GitHub release ZIP URL.
 2. Merge that versioned change to `main` through a pull request.
-3. Create and push a tag whose name exactly matches `module.json`, for example `0.1.0.001`.
-4. The GitHub Actions release workflow validates the tag, manifest version, and download URL; packages only the module files; and publishes `module.json` plus `emberwolf-quest-manager.zip` as release assets. `R=0` tags are GitHub prereleases; `R=1` tags are full releases.
+3. The push to `main` automatically runs the GitHub Actions release workflow. It validates the version increase and manifest URL, creates the matching tag and GitHub release, packages only the module files, and publishes `module.json` plus `emberwolf-quest-manager.zip`. `R=0` releases are GitHub prereleases; `R=1` releases are full releases.
 
-Foundry's stable manifest URL is the raw `module.json` on `main`. It can therefore advertise development prereleases as well as full releases. The manifest's `download` URL is version-specific, so every advertised version maps to its own release ZIP. Foundry can install or check for updates from this manifest URL after the matching tag workflow has published its assets.
+Foundry's stable manifest URL is the raw `module.json` on `main`. It can therefore advertise development prereleases as well as full releases. The manifest's `download` URL is version-specific, so every advertised version maps to its own release ZIP. Foundry can install or check for updates from this manifest URL after the merge-triggered release workflow has published its assets.

@@ -12,10 +12,12 @@ import {
   getVoteSummary,
   publishQuest,
   reopenQuest,
+  resolveQuestOutcome,
   saveGeminiRelayUrl,
   saveDraft,
   savePartyRoster
 } from "./quest-store.mjs";
+import { getGuildSettings, saveGuildSettings } from "./guild-store.mjs";
 import { makeFallbackClerkNote, requestClerkNote } from "./clerk-note.mjs";
 import { generateQuests } from "./quest-generator.mjs";
 import { CHALLENGE_OPTIONS, GENERATION_CATEGORIES, RULESET_OPTIONS, URGENCY_OPTIONS } from "./quest-pools.mjs";
@@ -27,6 +29,8 @@ const STATUS_LABELS = {
   available: "Open for party vote",
   accepted: "Accepted by the party",
   declined: "Declined by the party",
+  completed: "Completed",
+  failed: "Failed",
   closed: "Closed"
 };
 
@@ -51,8 +55,10 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       "close-quest": this.#closeQuest,
       "delete-quest": this.#deleteQuest,
       "reopen-quest": this.#reopenQuest,
+      "resolve-quest": this.#resolveQuest,
       "open-quest-sheet": this.#openQuestSheet,
       "save-party-roster": this.#savePartyRoster,
+      "save-guild-settings": this.#saveGuildSettings,
       "save-gemini-relay": this.#saveGeminiRelay,
       "generate-quests": this.#generateQuests
     }
@@ -69,6 +75,7 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
 
   async _prepareContext() {
     const isGM = game.user.isGM;
+    const guildSettings = getGuildSettings();
     const sourceQuests = isGM ? await getPrivateQuests() : getPublishedQuests();
     const eligibleVoters = getEligibleVoters();
     const partyRoster = isGM ? getPartyRoster() : [];
@@ -94,6 +101,11 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       hasPartyRoster: partyMembers.length > 0,
       partyRosterCount: partyMembers.length,
       partyLevel,
+      partyName: guildSettings.partyName,
+      hasPartyName: Boolean(guildSettings.partyName),
+      guildXpPerRank: guildSettings.xpPerRank,
+      guildQuestXpAward: guildSettings.questXpAward,
+      guildQuestXpPenalty: guildSettings.questXpPenalty,
       hasCharacterActors: partyRoster.some(actor => actor.isSelectable),
       generationCategories: [{ id: "", label: "Any category" }, ...GENERATION_CATEGORIES],
       challengeOptions: CHALLENGE_OPTIONS.map(option => ({ ...option, isDefault: option.id === "standard" })),
@@ -139,11 +151,17 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       isAvailable,
       isAccepted: displayStatus === "accepted",
       isDeclined: displayStatus === "declined",
+      isCompleted: displayStatus === "completed",
+      isFailed: displayStatus === "failed",
       isClosed: displayStatus === "closed",
-      thumbnailPath: displayStatus === "accepted"
+      thumbnailPath: ["accepted", "completed", "failed"].includes(displayStatus)
         ? "modules/" + MODULE_ID + "/assets/EWAG_Job_Sealed_Thumbnail.png"
         : "modules/" + MODULE_ID + "/assets/EWAG_Job_Thumbnail.png",
-      thumbnailAlt: quest.title + (displayStatus === "accepted" ? " — accepted by the party" : " — open guild posting"),
+      thumbnailAlt: quest.title + (
+        ["accepted", "completed", "failed"].includes(displayStatus)
+          ? " — sealed guild posting"
+          : " — open guild posting"
+      ),
       canVote: !isGM && isAvailable && !tally.outcome,
       pendingOutcome: !isGM && quest.status === "available" && Boolean(tally.outcome),
       isMyAccept: myVote === "accept",
@@ -158,6 +176,9 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       createdLabel: formatDate(quest.createdAt),
       canClose: isGM && PUBLIC_STATUSES.has(quest.status),
       canReopen: isGM && ["accepted", "declined", "closed"].includes(quest.status),
+      canResolve: isGM && quest.status === "accepted",
+      hasParticipantSnapshot: Array.isArray(quest.participantActorIds) && quest.participantActorIds.length > 0,
+      participantCount: Array.isArray(quest.participantActorIds) ? quest.participantActorIds.length : 0,
       canPublish: isGM && quest.status === "draft",
       canEdit: isGM,
       canDelete: isGM,
@@ -185,6 +206,22 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
     } catch (error) {
       console.error(MODULE_ID + " | Could not save party roster.", error);
       ui.notifications.error(error.message ?? "Could not save the party roster.");
+    }
+  }
+
+  static async #saveGuildSettings(event) {
+    event.preventDefault();
+    try {
+      const form = this.element.querySelector("[data-guild-settings-form]");
+      const settings = await saveGuildSettings(Object.fromEntries(new FormData(form).entries()));
+      ui.notifications.info(settings.partyName
+        ? "Party name and guild experience settings saved."
+        : "Guild experience settings saved; no party name is set.");
+      await this.render();
+      refreshQuestSheets();
+    } catch (error) {
+      console.error(MODULE_ID + " | Could not save guild settings.", error);
+      ui.notifications.error(error.message ?? "Could not save guild settings.");
     }
   }
 
@@ -381,6 +418,30 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
     }
   }
 
+  static async #resolveQuest(event, target) {
+    event.preventDefault();
+    try {
+      const result = await resolveQuestOutcome(target.dataset.questId, target.dataset.outcome);
+      const applied = result.results.filter(entry => entry.applied);
+      if (!applied.length) {
+        ui.notifications.info(
+          "Quest marked " + result.outcome + ". No enrolled party characters received guild XP."
+        );
+      } else {
+        const change = applied.reduce((total, entry) => total + entry.change, 0);
+        const direction = change > 0 ? "+" : "";
+        ui.notifications.info(
+          "Quest marked " + result.outcome + ". " + applied.length + " enrolled character(s) updated; combined Guild XP change: "
+          + direction + change + "."
+        );
+      }
+      await this.render();
+    } catch (error) {
+      console.error(MODULE_ID + " | Could not resolve quest outcome.", error);
+      ui.notifications.error(error.message ?? "Could not resolve the quest outcome.");
+    }
+  }
+
   static async #openQuestSheet(event, target) {
     event.preventDefault();
     try {
@@ -445,7 +506,7 @@ export class QuestSheetApplication extends HandlebarsApplicationMixin(Applicatio
       hasGmNotes: game.user.isGM && Boolean(quest.gmNotes),
       createdLabel: formatDate(quest.createdAt),
       statusLabel: STATUS_LABELS[status] ?? "Unknown status",
-      isAccepted: status === "accepted",
+      isAccepted: ["accepted", "completed", "failed"].includes(status),
       isAvailable: status === "available",
       isDeclined: status === "declined",
       categoryLabel: quest.categoryLabel ?? "",
