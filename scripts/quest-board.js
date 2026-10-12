@@ -406,7 +406,7 @@ export class QuestSheetApplication extends HandlebarsApplicationMixin(Applicatio
       icon: "fa-solid fa-scroll",
       resizable: true
     },
-    position: { width: 900, height: 1000 },
+    position: { width: 600, height: 790 },
     actions: {
       "cast-party-vote": this.#castPartyVote
     }
