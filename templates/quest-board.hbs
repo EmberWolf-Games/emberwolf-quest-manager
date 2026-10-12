@@ -1,15 +1,16 @@
 <section class="ewqm-board {{#if isGM}}ewqm-is-gm{{else}}ewqm-is-player{{/if}}">
-  <header class="ewqm-masthead">
-    <p class="ewqm-guild-name">Emberwolf Adventurers' Guild</p>
-    <h1>Quest Board</h1>
-    <p class="ewqm-intro">
-      {{#if isGM}}
-        Draft commissions, publish them for a party vote, and keep the guild board current.
-      {{else}}
-        Read the posted commissions and cast your vote for the party.
-      {{/if}}
-    </p>
-  </header>
+  <div class="ewqm-board-controls">
+    <header class="ewqm-masthead">
+      <p class="ewqm-guild-name">Emberwolf Adventurers' Guild</p>
+      <h1>Quest Board</h1>
+      <p class="ewqm-intro">
+        {{#if isGM}}
+          Draft commissions, publish them for a party vote, and keep the guild board current.
+        {{else}}
+          Read the posted commissions and cast your vote for the party.
+        {{/if}}
+      </p>
+    </header>
 
   {{#if isGM}}
     <details class="ewqm-editor ewqm-generator" open>
@@ -135,52 +136,55 @@
       <p class="ewqm-security-note">Drafts and GM only notes are stored in GM-owned journal records. Only published text is shared with players.</p>
     </details>
   {{/if}}
-
-  <div class="ewqm-board-heading">
-    <h2>{{#if isGM}}Guild records{{else}}Open commissions{{/if}}</h2>
-    {{#if isGM}}<span>{{quests.length}} total</span>{{/if}}
   </div>
 
-  {{#if hasQuests}}
-    <div class="ewqm-quest-list">
-      {{#each quests as |quest|}}
-        <article class="ewqm-quest-card ewqm-status-{{quest.statusClass}}">
-          <button type="button" class="ewqm-quest-thumbnail" data-action="open-quest-sheet" data-quest-id="{{quest.id}}" aria-label="Open commission: {{quest.title}}">
-            <img src="{{quest.thumbnailPath}}" alt="{{quest.thumbnailAlt}}" width="570" height="701">
-          </button>
-          <div class="ewqm-thumbnail-caption">
-            <div class="ewqm-thumbnail-status">
-              <span class="ewqm-status-label">{{quest.statusLabel}}</span>
-              {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
-            </div>
-            <h3>{{quest.title}}</h3>
-            <p>{{#if ../isPlayer}}Open the posting to read the full commission and vote.{{else}}Open the full commission sheet.{{/if}}</p>
-          </div>
+  <div class="ewqm-board-gallery">
+    <div class="ewqm-board-heading">
+      <h2>{{#if isGM}}Guild records{{else}}Open commissions{{/if}}</h2>
+      {{#if isGM}}<span>{{quests.length}} total</span>{{/if}}
+    </div>
 
-          {{#if ../isGM}}
-            <div class="ewqm-card-actions">
-              <button type="button" data-action="edit-quest" data-quest-id="{{quest.id}}">Edit</button>
-              {{#if quest.canPublish}}<button type="button" data-action="publish-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Publish</button>{{/if}}
-              {{#if quest.canClose}}<button type="button" data-action="close-quest" data-quest-id="{{quest.id}}" class="ewqm-danger">Close</button>{{/if}}
-              {{#if quest.canReopen}}<button type="button" data-action="reopen-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Reopen vote</button>{{/if}}
-              {{#if quest.canDelete}}
-                <button type="button" data-action="delete-quest" data-quest-id="{{quest.id}}" class="ewqm-danger ewqm-delete" aria-pressed="{{quest.isDeleteArmed}}">
-                  {{#if quest.isDeleteArmed}}Confirm delete{{else}}Delete{{/if}}
-                </button>
-              {{/if}}
+    {{#if hasQuests}}
+      <div class="ewqm-quest-list">
+        {{#each quests as |quest|}}
+          <article class="ewqm-quest-card ewqm-status-{{quest.statusClass}}">
+            <button type="button" class="ewqm-quest-thumbnail" data-action="open-quest-sheet" data-quest-id="{{quest.id}}" aria-label="Open commission: {{quest.title}}">
+              <img src="{{quest.thumbnailPath}}" alt="{{quest.thumbnailAlt}}" width="143" height="175">
+            </button>
+            <div class="ewqm-thumbnail-caption">
+              <div class="ewqm-thumbnail-status">
+                <span class="ewqm-status-label">{{quest.statusLabel}}</span>
+                {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
+              </div>
+              <h3>{{quest.title}}</h3>
+              <p>Open full sheet</p>
             </div>
-            {{#if quest.isDeleteArmed}}<p class="ewqm-delete-confirmation" role="status">Click “Confirm delete” within 8 seconds to permanently remove this quest.</p>{{/if}}
-          {{/if}}
-        </article>
-      {{/each}}
-    </div>
-  {{else}}
-    <div class="ewqm-empty-state">
-      {{#if isGM}}
-        <p>No guild records yet. Start with a draft above.</p>
-      {{else}}
-        <p>The guild board is quiet for now. Check back when new work is posted.</p>
-      {{/if}}
-    </div>
-  {{/if}}
+
+            {{#if ../isGM}}
+              <div class="ewqm-card-actions">
+                <button type="button" data-action="edit-quest" data-quest-id="{{quest.id}}">Edit</button>
+                {{#if quest.canPublish}}<button type="button" data-action="publish-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Publish</button>{{/if}}
+                {{#if quest.canClose}}<button type="button" data-action="close-quest" data-quest-id="{{quest.id}}" class="ewqm-danger">Close</button>{{/if}}
+                {{#if quest.canReopen}}<button type="button" data-action="reopen-quest" data-quest-id="{{quest.id}}" class="ewqm-primary">Reopen vote</button>{{/if}}
+                {{#if quest.canDelete}}
+                  <button type="button" data-action="delete-quest" data-quest-id="{{quest.id}}" class="ewqm-danger ewqm-delete" aria-pressed="{{quest.isDeleteArmed}}">
+                    {{#if quest.isDeleteArmed}}Confirm delete{{else}}Delete{{/if}}
+                  </button>
+                {{/if}}
+              </div>
+              {{#if quest.isDeleteArmed}}<p class="ewqm-delete-confirmation" role="status">Click “Confirm delete” within 8 seconds to permanently remove this quest.</p>{{/if}}
+            {{/if}}
+          </article>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="ewqm-empty-state">
+        {{#if isGM}}
+          <p>No guild records yet. Start with a draft above.</p>
+        {{else}}
+          <p>The guild board is quiet for now. Check back when new work is posted.</p>
+        {{/if}}
+      </div>
+    {{/if}}
+  </div>
 </section>
