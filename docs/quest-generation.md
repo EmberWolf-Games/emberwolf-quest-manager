@@ -36,10 +36,29 @@ Noncombat targets use `challengeRank`, an editable comparative danger rating kep
 
 Dice formulas such as `2d4` remain visible in the objective; the generator does not roll or replace them with a quantity. The max value is used for the conservative combat budget estimate.
 
-Standard, Urgent, and Emergency are kept independent from challenge selection. Urgency changes the posting's framing and applies its configured reward multiplier. No world-time deadline or automatic expiration is created.
+Standard, Urgent, and Emergency are kept independent from challenge selection. Urgency changes the posting's framing and applies its configured reward multiplier.
 
-Reward calculations start with the selected category's party-level pay band in copper, then apply category, challenge, urgency, target-risk, and quantity multipliers. Results are rounded to 5 CP and displayed in GP/SP/CP denominations (100 CP = 10 SP = 1 GP). The reward arrays and all multipliers in this first generator are provisional balancing defaults. They are editable in `quest-pools.mjs` and are not approved final economy rules.
+Reward calculations start with the selected category's party-level pay band in copper, then apply category, challenge, urgency, target-risk, and quantity multipliers. The selected challenge tier (Routine, Standard, or High Risk) is the reward-table key for this implementation; it is distinct from an adventurer's Guild Rank G–S. Each tier rolls a GM-only Foundry RollTable created in the `EWQM — Quest Reward Tables` folder. The generator creates a table only when one is missing; GM edits to existing table results are retained. Table results use a numeric multiplier such as `0.90× reward multiplier`. The tables are reusable and do not announce rolls in chat. Results are rounded to 5 CP and displayed in GP/SP/CP denominations (100 CP = 10 SP = 1 GP).
+
+The starting reward tables are:
+
+| Challenge tier | Possible table multipliers (weights) |
+| --- | --- |
+| Routine | 0.8× (35), 0.9× (35), 1.0× (20), 1.1× (10) |
+| Standard | 0.85× (15), 0.95× (30), 1.0× (35), 1.1× (15), 1.2× (5) |
+| High Risk | 0.9× (10), 1.0× (20), 1.15× (30), 1.3× (25), 1.5× (15) |
+
+These are starter odds and payout adjustments, not final economy rules. Multipliers stack with the category, urgency, target, quantity, and encounter-risk adjustments. The generator records the roll and the full multiplier breakdown in the GM-only generation notes.
+
+## Time limits
+
+Pool entries may include a deadline duration and a reason. Initial time-limited examples include medicine delivery, food relief, and locating a missing herbalist. A GM can also set or clear a duration and edit its reason when authoring a commission; the allowed range is 0–168 hours.
+
+A deadline begins when its draft is published. It advances only while the world is unpaused. Outside active combat it counts unpaused real time; during active combat, each forward combat-round advance subtracts six seconds, matching the requested round economy. Rewinding a round does not restore time. Switching between real-time and round-based modes preserves the remaining duration, and pausing freezes it.
+
+When the countdown reaches zero, the posting remains on the board and the GM decides whether the quest was completed or failed. An elapsed deadline does not automatically hide, close, fail, or award Guild XP to a quest. Closing, declining, completing, or failing a quest stops its countdown; reopening an unresolved quest resumes its saved remaining time. These rules intentionally leave quest refresh and disappearance behavior unchanged.
 
 ## Owner-confirmed goals and implementation defaults
 
-The composable pools, party-level calculation, approximate CR band, CP/SP/GP payouts, and three urgency classes are project requirements. The exact pool schema, starter examples, challenge labels and mappings, reward tables, multipliers, displayed-dice choice, and ruleset default are implementation choices that remain open to balancing. Exact deadlines, refresh schedules, and automatic quest lifecycle changes remain unimplemented.
+The composable pools, party-level calculation, approximate CR band, CP/SP/GP payouts, and three urgency classes are project requirements. The exact pool schema, starter examples, challenge labels and mappings, reward tables, multipliers, displayed-dice choice, and ruleset default are implementation choices that remain open to balancing. The starting guild XP defaults award +25 XP per enrolled character for a completed quest and deduct 10 XP per enrolled character for a failed quest, with a floor of 0; the GM can adjust both on the quest board. Rank thresholds are separately adjustable in module settings. Whether reward-table tiers should eventually map to Guild Rank G–S remains open for balancing.
+

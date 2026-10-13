@@ -8,6 +8,7 @@ import {
   getPartyRoster,
   getPrivateQuest,
   getPrivateQuests,
+  getQuestDeadlineDisplay,
   getPublishedQuests,
   getVoteSummary,
   publishQuest,
@@ -118,6 +119,8 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
         ? (editingQuest.clerkNote || makeFallbackClerkNote(editingQuest))
         : "",
       editingGmNotes: editingQuest?.gmNotes ?? "",
+      editingDeadlineHours: formatDeadlineHours(editingQuest?.deadlineSeconds),
+      editingDeadlineReason: editingQuest?.deadlineReason ?? "",
       geminiRelayUrl: getGeminiRelayUrl(),
       hasGeminiRelay: Boolean(getGeminiRelayUrl()),
       quests
@@ -187,7 +190,8 @@ export class QuestBoardApplication extends HandlebarsApplicationMixin(Applicatio
       categoryLabel: quest.categoryLabel ?? "",
       urgencyLabel: quest.urgencyLabel ?? "",
       hasPublicDetails: Boolean(quest.categoryLabel || quest.urgencyLabel || hasReward),
-      rewardLabel: hasReward ? formatCurrency(Number(quest.rewardCopper)) : ""
+      rewardLabel: hasReward ? formatCurrency(Number(quest.rewardCopper)) : "",
+      ...getQuestDeadlineDisplay(quest)
     };
   }
 
@@ -514,6 +518,7 @@ export class QuestSheetApplication extends HandlebarsApplicationMixin(Applicatio
       hasUrgency: Boolean(quest.urgencyLabel),
       hasReward,
       rewardLabel: hasReward ? formatCurrency(Number(quest.rewardCopper)) : "",
+      ...getQuestDeadlineDisplay(quest),
       canVote: !game.user.isGM && status === "available" && !tally.outcome,
       isMyAccept: myVote === "accept",
       isMyDecline: myVote === "decline",
@@ -569,6 +574,45 @@ export function refreshQuestSheets() {
     .map(application => application.render()));
 }
 
+export function refreshQuestDeadlineLabels(quests = null) {
+  const now = Date.now();
+  const questsById = new Map((Array.isArray(quests) ? quests : []).map(quest => [quest.id, quest]));
+  for (const element of document.querySelectorAll("[data-ewqm-deadline]")) {
+    const quest = questsById.get(element.dataset.deadlineQuestId);
+    if (quest) {
+      const display = getQuestDeadlineDisplay(quest, { now });
+      element.dataset.deadlineRemaining = String(display.deadlineRemainingSeconds);
+      element.dataset.deadlineUpdatedAt = String(display.deadlineUpdatedAt);
+      element.dataset.deadlineClockMode = display.deadlineClockMode;
+      element.dataset.deadlineState = display.deadlineState;
+      const reason = element.closest(".ewqm-deadline-block, .ewqm-sheet-deadline")
+        ?.querySelector("[data-ewqm-deadline-reason]");
+      if (reason) {
+        reason.textContent = display.deadlineReason;
+        reason.hidden = !display.deadlineReason;
+      }
+    }
+
+    const mode = element.dataset.deadlineClockMode;
+    const updatedAt = Number(element.dataset.deadlineUpdatedAt) || now;
+    let remaining = Math.max(0, Number(element.dataset.deadlineRemaining) || 0);
+    if (mode === "realtime" && !game.paused) remaining = Math.max(0, remaining - Math.max(0, (now - updatedAt) / 1000));
+    const state = remaining <= 0
+      ? "expired"
+      : mode === "draft"
+        ? "draft"
+        : mode === "stopped"
+          ? "stopped"
+          : mode === "paused" || game.paused
+            ? "paused"
+            : mode === "rounds"
+              ? "rounds"
+              : "realtime";
+    element.textContent = formatDeadlineLabel(state, Math.ceil(remaining));
+    element.classList.toggle("is-expired", state === "expired");
+  }
+}
+
 function formatDate(timestamp) {
   if (!timestamp) return "";
   return new Date(timestamp).toLocaleDateString();
@@ -584,5 +628,33 @@ function formatCurrency(copper) {
     silver ? silver + " SP" : "",
     remainingCopper ? remainingCopper + " CP" : ""
   ].filter(Boolean).join(", ") || "0 CP";
+}
+
+function formatDeadlineHours(seconds) {
+  const value = Math.max(0, Number(seconds) || 0) / 3600;
+  return value ? String(value) : "0";
+}
+
+function formatDeadlineLabel(state, remainingSeconds) {
+  if (state === "expired") return "Time limit elapsed";
+  const seconds = Math.max(0, Math.ceil(Number(remainingSeconds) || 0));
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainder = seconds % 60;
+  const duration = days
+    ? days + "d " + String(hours).padStart(2, "0") + "h"
+    : hours
+      ? String(hours).padStart(2, "0") + ":" + String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0")
+      : String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
+  if (state === "draft") return "Starts when published · " + duration + " limit";
+  const prefix = state === "paused"
+    ? "Paused · "
+    : state === "stopped"
+      ? "Stopped · "
+      : state === "rounds"
+        ? "Combat rounds · "
+        : "Unpaused time · ";
+  return prefix + duration;
 }
 

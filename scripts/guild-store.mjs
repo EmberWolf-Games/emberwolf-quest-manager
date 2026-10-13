@@ -54,7 +54,7 @@ export function registerGuildSettings() {
   }
   game.settings.register(MODULE_ID, QUEST_XP_AWARD_SETTING, {
     name: "Guild XP for Completed Quest",
-    hint: "Provisional guild experience awarded to each enrolled party character when a quest is completed.",
+    hint: "Default: +25 Guild XP for each enrolled party character when the GM marks an accepted quest completed. The GM can adjust this on the quest board.",
     scope: "world",
     config: false,
     type: Number,
@@ -62,7 +62,7 @@ export function registerGuildSettings() {
   });
   game.settings.register(MODULE_ID, QUEST_XP_PENALTY_SETTING, {
     name: "Guild XP Penalty for Failed Quest",
-    hint: "Provisional guild experience deducted from each enrolled party character when a quest fails.",
+    hint: "Default: −10 Guild XP for each enrolled party character when the GM marks an accepted quest failed. Guild XP cannot fall below 0; the GM can adjust this on the quest board.",
     scope: "world",
     config: false,
     type: Number,
