@@ -130,7 +130,7 @@
           <button type="button" data-action="generate-quests" class="ewqm-primary">Generate drafts</button>
         </div>
       </form>
-      <p class="ewqm-security-note">The party level is the floor of the selected characters' average levels. Reward tables and urgency multipliers are starter balancing values. Combat estimates are not a guarantee of encounter safety.</p>
+      <p class="ewqm-security-note">The party level is the floor of the selected characters' average levels. Generated rewards roll the Routine, Standard, or High Risk Foundry table, then apply category, urgency, target, quantity, and encounter-risk adjustments. Combat estimates are not a guarantee of encounter safety.</p>
     </details>
 
     <details class="ewqm-editor" open>
@@ -153,12 +153,22 @@
           <span>GM only notes</span>
           <textarea name="gmNotes" rows="2" maxlength="4000" placeholder="Private details stay in the GM archive.">{{editingGmNotes}}</textarea>
         </label>
+        <div class="ewqm-generator-fields ewqm-deadline-fields">
+          <label class="ewqm-field">
+            <span>Time limit during active play (hours; 0 means none)</span>
+            <input name="deadlineHours" type="number" min="0" max="168" step="0.5" value="{{editingDeadlineHours}}">
+          </label>
+          <label class="ewqm-field">
+            <span>Deadline condition shown to players</span>
+            <input name="deadlineReason" maxlength="240" value="{{editingDeadlineReason}}" placeholder="Deliver before the medicine loses potency">
+          </label>
+        </div>
         <div class="ewqm-editor-actions">
           <button type="button" data-action="save-quest" class="ewqm-primary">{{#if isEditing}}Save changes{{else}}Save as draft{{/if}}</button>
           {{#if isEditing}}<button type="button" data-action="cancel-edit">Cancel</button>{{/if}}
         </div>
       </form>
-      <p class="ewqm-security-note">Drafts and GM only notes are stored in GM-owned journal records. Only published text is shared with players.</p>
+      <p class="ewqm-security-note">Drafts and GM only notes are stored in GM-owned journal records. Only published text and deadline details are shared with players. A quest timer starts on publish.</p>
     </details>
   {{/if}}
   </div>
@@ -182,6 +192,12 @@
                 {{#if quest.createdLabel}}<time>Posted: {{quest.createdLabel}}</time>{{/if}}
               </div>
               <h3>{{quest.title}}</h3>
+              {{#if quest.hasDeadline}}
+                <div class="ewqm-deadline-block">
+                  {{#if quest.deadlineReason}}<small data-ewqm-deadline-reason>{{quest.deadlineReason}}</small>{{/if}}
+                  <time data-ewqm-deadline data-deadline-quest-id="{{quest.id}}" data-deadline-remaining="{{quest.deadlineRemainingSeconds}}" data-deadline-updated-at="{{quest.deadlineUpdatedAt}}" data-deadline-clock-mode="{{quest.deadlineClockMode}}" data-deadline-state="{{quest.deadlineState}}">{{quest.deadlineLabel}}</time>
+                </div>
+              {{/if}}
               <p>Open full sheet</p>
             </div>
 

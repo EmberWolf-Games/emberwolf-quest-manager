@@ -46,7 +46,7 @@ These multipliers are starting design assumptions; refine via balancing. Higher 
 - EWQM-owned quest persistence, not another quest tracker's private data structure.
 - GM can generate, edit, review, publish, close, and manage quests.
 - Public board/quest display must not reveal GM-only data.
-- Model distinct available/accepted/completed/failed states; final state transitions, expiration, claims, permissions, and visibility will be specified with implementation.
+- Model distinct available/accepted/completed/failed states; final state transitions, claims, permissions, and visibility will be specified with implementation. Optional deadlines begin when published, count unpaused real time outside combat or six seconds per forward round during active combat, and show an elapsed state without automatically hiding or failing the posting.
 - Keep the generator, persistence, and presentation decoupled.
 
 ## Initial quest-board rules
@@ -58,10 +58,10 @@ These multipliers are starting design assumptions; refine via balancing. Higher 
 
 ## Open design questions (do not assume answers)
 - Multiclass total-level behavior should be confirmed against the active dnd5e build.
-- Rank nomenclature and mapping to CR/party level.
+- Mapping adventurer Guild Rank G–S to party level, CR, and a quest's reward tier.
 - Data sources for enemies, NPCs, resources, and destinations.
 - Quest-count and refresh schedule.
-- Exact deadlines, time/calendar integration, and expiration.
+- Time/calendar integration beyond the implemented unpaused real-time and combat-round deadline clocks.
 - Reward base tables, quantity scaling, balance caps and XP handling.
 - UI design and reward distribution/claim process.
 
@@ -69,3 +69,4 @@ These multipliers are starting design assumptions; refine via balancing. Higher 
 - Write compatibility-focused, testable code in subsequent Codex PRs.
 - Do not assume unsupported v14 or dnd5e APIs.
 - Don't package or claim a working release until tested in Foundry.
+

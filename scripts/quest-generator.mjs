@@ -7,6 +7,7 @@ import {
   URGENCY_OPTIONS,
   XP_BUDGETS
 } from "./quest-pools.mjs";
+import { ensureQuestRewardTables, rollQuestReward } from "./reward-tables.mjs";
 
 const MINIMUM_LEVEL = 1;
 const MAXIMUM_LEVEL = 20;
@@ -35,6 +36,7 @@ export async function generateQuests({
   if (!difficulty) throw new Error("Choose a valid challenge level.");
   if (!urgency) throw new Error("Choose a valid urgency.");
   if (!ruleset) throw new Error("Choose a valid encounter ruleset.");
+  await ensureQuestRewardTables();
 
   const categoryIds = categoryId
     ? [categoryId]
@@ -73,7 +75,7 @@ export async function generateQuests({
     const available = candidates.filter(candidate => !batchTargets.has(candidate.categoryId + ":" + candidate.target.id));
     const candidate = chooseWeighted(available.length ? available : candidates, entry => entry.weight);
     batchTargets.add(candidate.categoryId + ":" + candidate.target.id);
-    generated.push(buildQuest({
+    generated.push(await buildQuest({
       candidate,
       difficulty,
       urgency,
@@ -258,7 +260,7 @@ function estimateEncounterXp(monsterXp, monsterCount, partySize, rulesetId) {
   return monsterXp * monsterCount * ENCOUNTER_MULTIPLIERS_2014[multiplierIndex];
 }
 
-function buildQuest({ candidate, difficulty, urgency, ruleset, members, partyLevel }) {
+async function buildQuest({ candidate, difficulty, urgency, ruleset, members, partyLevel }) {
   const { pool, target, quantity, categoryId } = candidate;
   const action = choose(pool.actions);
   const objective = formatObjective(action, quantity, target);
@@ -267,13 +269,17 @@ function buildQuest({ candidate, difficulty, urgency, ruleset, members, partyLev
     urgent: "The guild requests swift help; delay may put the objective at risk.",
     emergency: "The guild has declared an immediate crisis, and time is critical."
   }[urgency.id];
+  const deadlineSeconds = Math.max(0, Math.trunc(Number(target.deadlineSeconds) || 0));
+  const deadlineReason = String(target.deadlineReason ?? "").trim();
   const description = opening + "\n\n" + objective;
   const rewardBand = pool.rewards.find(entry => partyLevel >= entry.minimumPartyLevel && partyLevel <= entry.maximumPartyLevel);
   if (!rewardBand) throw new Error("No provisional reward band is configured for party level " + partyLevel + ".");
+  const rewardRoll = await rollQuestReward(difficulty.id);
 
   const unroundedReward = rewardBand.baseCopper
     * pool.rewardMultiplier
     * difficulty.rewardMultiplier
+    * rewardRoll.multiplier
     * urgency.rewardMultiplier
     * (target.rewardMultiplier ?? 1)
     * (quantity.rewardMultiplier ?? 1)
@@ -292,7 +298,12 @@ function buildQuest({ candidate, difficulty, urgency, ruleset, members, partyLev
       ? "Combat estimate: CR " + target.cr + ", up to " + quantity.maximum + " creature(s), approximately " + candidate.encounterXp + " adjusted XP against a " + candidate.xpBudget + " XP budget using the " + ruleset.label + ". This is an estimate, not an encounter-safety guarantee."
       : "Noncombat danger rank: " + candidate.challengeRank + " (a configurable comparative rating, not creature CR).",
     "Objective quantity uses " + (quantity.formula || "no dice formula") + "; the formula has not been rolled.",
-    "Provisional payout: " + rewardCopper + " CP equivalent. Starter reward values and multipliers are balancing assumptions."
+    "Reward roll: " + rewardRoll.tableName + " — " + rewardRoll.formula + " = " + rewardRoll.rollTotal + ", result " + rewardRoll.result + ".",
+    "Payout multipliers: category " + pool.rewardMultiplier + " × challenge " + difficulty.rewardMultiplier + " × urgency " + urgency.rewardMultiplier + " × table " + rewardRoll.multiplier + ", plus target, quantity, and encounter-risk adjustments.",
+    "Provisional payout: " + rewardCopper + " CP equivalent. Starter reward values and multipliers are balancing assumptions.",
+    deadlineSeconds > 0
+      ? "Time limit: " + formatDuration(deadlineSeconds) + (deadlineReason ? " (" + deadlineReason + ")" : "") + ". Starts when published; it advances only while the game is unpaused."
+      : "No time limit is set for this commission."
   ].join("\n");
 
   return {
@@ -304,6 +315,8 @@ function buildQuest({ candidate, difficulty, urgency, ruleset, members, partyLev
     urgencyId: urgency.id,
     urgencyLabel: urgency.label,
     rewardCopper,
+    deadlineSeconds,
+    deadlineReason,
     generationMetadata: {
       generatorVersion: 1,
       generatedAt: Date.now(),
@@ -320,9 +333,27 @@ function buildQuest({ candidate, difficulty, urgency, ruleset, members, partyLev
       quantityId: quantity.id,
       quantityFormula: quantity.formula || "",
       quantityMaximum: quantity.maximum,
+      deadlineSeconds,
+      deadlineReason,
       estimatedEncounterXp: candidate.encounterXp,
       estimatedXpBudget: candidate.xpBudget,
       rewardCopper,
+      rewardRank: difficulty.id,
+      rewardTableId: rewardRoll.tableId,
+      rewardRoll: {
+        formula: rewardRoll.formula,
+        total: rewardRoll.rollTotal,
+        result: rewardRoll.result,
+        multiplier: rewardRoll.multiplier
+      },
+      rewardMultipliers: {
+        category: pool.rewardMultiplier,
+        challenge: difficulty.rewardMultiplier,
+        urgency: urgency.rewardMultiplier,
+        target: target.rewardMultiplier ?? 1,
+        quantity: quantity.rewardMultiplier ?? 1,
+        encounterRisk: candidate.riskMultiplier
+      },
       rewardWasRounded: rewardCopper !== unroundedReward
     }
   };
@@ -355,3 +386,18 @@ function chooseWeighted(entries, getWeight) {
 function choose(entries) {
   return entries[Math.floor(Math.random() * entries.length)];
 }
+
+function formatDuration(totalSeconds) {
+  const seconds = Math.max(0, Math.trunc(Number(totalSeconds) || 0));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return days + " day" + (days === 1 ? "" : "s") + (remainingHours ? " " + remainingHours + " hour" + (remainingHours === 1 ? "" : "s") : "");
+  }
+  if (hours) return hours + " hour" + (hours === 1 ? "" : "s") + (minutes ? " " + minutes + " minutes" : "");
+  if (minutes) return minutes + " minute" + (minutes === 1 ? "" : "s");
+  return seconds + " seconds";
+}
+

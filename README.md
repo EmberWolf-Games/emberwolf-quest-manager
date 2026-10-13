@@ -2,7 +2,7 @@
 
 A standalone, open-source Adventurer's Guild and procedural quest management module for **Foundry Virtual Tabletop v14** and the **dnd5e** game system.
 
-> **Status: early implementation.** The module includes a GM-facing procedural draft generator, quest publication and party voting, per-character guild membership cards and rank experience, a shared party name, and a parchment-style player board. Generator pools, feasibility estimates, payouts, and guild XP use provisional starter values. Deadlines are not implemented. Compatibility is being checked in Foundry v14 with dnd5e.
+> **Status: early implementation.** The module includes a GM-facing procedural draft generator, quest publication and party voting, per-character guild membership cards and rank experience, a shared party name, and a parchment-style player board. Generator pools, feasibility estimates, payouts, and guild XP use provisional starter values. Optional quest deadlines pause with the world and advance by combat rounds while combat is active. Compatibility is being checked in Foundry v14 with dnd5e.
 
 ## Goals
 
@@ -42,3 +42,4 @@ The package uses `R.M.m.b` versions; see [VERSIONING.md](VERSIONING.md). Merging
 ## License
 
 MIT License. See [LICENSE](LICENSE). Copyright © 2026 EmberWolf Games.
+

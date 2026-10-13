@@ -79,6 +79,7 @@ export const QUEST_POOLS = {
       { id: "several-sites", formula: "1d4", unit: "sites near", maximum: 4, minimumPartyLevel: 5, rewardMultiplier: 1.25 }
     ],
     targets: [
+      { id: "missing-herbalist", name: "the missing herbalist", challengeRank: 2, rewardMultiplier: 1.15, deadlineSeconds: 8 * 60 * 60, deadlineReason: "Find them before nightfall closes the trail." },
       { id: "old-road", name: "the abandoned watchtower", challengeRank: 1, rewardMultiplier: 0.9 },
       { id: "collapsed-mine", name: "the collapsed silver mine", challengeRank: 4, rewardMultiplier: 1 },
       { id: "ruined-shrine", name: "the shrine hidden in the briarwood", challengeRank: 7, rewardMultiplier: 1.1 },
@@ -101,6 +102,8 @@ export const QUEST_POOLS = {
       { id: "one-traveler", formula: "", unit: "", maximum: 1, minimumPartyLevel: 1, rewardMultiplier: 1 }
     ],
     targets: [
+      { id: "medicine-delivery", subject: "a sealed medicine satchel", destination: "the fever-stricken mill town", challengeRank: 1, rewardMultiplier: 1.2, deadlineSeconds: 6 * 60 * 60, deadlineReason: "The medicine must arrive before dawn, while it still holds its strength." },
+      { id: "food-relief", subject: "a cart of winter provisions", destination: "the snowbound hamlet", challengeRank: 2, rewardMultiplier: 1.15, deadlineSeconds: 24 * 60 * 60, deadlineReason: "The hamlet's remaining stores will run out by tomorrow evening." },
       { id: "courier-to-village", subject: "a wounded courier", destination: "the nearby village", challengeRank: 1, rewardMultiplier: 0.9 },
       { id: "healer-to-mines", subject: "a traveling healer", destination: "the miners' camp", challengeRank: 4, rewardMultiplier: 1 },
       { id: "envoy-to-fort", subject: "a guild envoy", destination: "the border fort", challengeRank: 7, rewardMultiplier: 1.1 },
@@ -162,3 +165,4 @@ export const XP_BUDGETS = {
 
 export const ENCOUNTER_MULTIPLIERS_2014 = [1, 1.5, 2, 2.5, 3, 4];
 export const REWARD_ROUNDING_COPPER = 5;
+

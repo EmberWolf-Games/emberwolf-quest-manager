@@ -432,6 +432,36 @@
   font-size: 0.66rem;
 }
 
+.ewqm-deadline-fields {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.ewqm-deadline-block {
+  display: grid;
+  gap: 0.12rem;
+  margin: 0.18rem 0 0.22rem;
+  color: #ead7b4;
+  font-size: 0.62rem;
+  line-height: 1.3;
+}
+
+.ewqm-deadline-block small {
+  display: block;
+  color: #c8b394;
+  font-size: inherit;
+}
+
+.ewqm-deadline-block time,
+.ewqm-sheet-deadline time {
+  color: #f0c579;
+  font-weight: 800;
+}
+
+.ewqm-deadline-block time.is-expired,
+.ewqm-sheet-deadline time.is-expired {
+  color: #f08d7a;
+}
+
 .ewqm-card-actions,
 .ewqm-sheet-vote .ewqm-vote-actions {
   margin-top: 0.55rem;
@@ -546,6 +576,32 @@
   font-style: italic;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.ewqm-sheet-deadline {
+  display: grid;
+  gap: 0.08rem;
+  margin: 0.28rem 0;
+  padding: 0.28rem 0.4rem;
+  border: 1px solid rgb(90 62 32 / 36%);
+  background: rgb(255 247 222 / 48%);
+}
+
+.ewqm-sheet-deadline h2 {
+  margin: 0;
+  color: #49321f;
+  font-family: "Book Antiqua", "Palatino Linotype", Georgia, serif;
+  font-size: 0.76rem;
+  font-variant: small-caps;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.ewqm-sheet-deadline p,
+.ewqm-sheet-deadline time {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.3;
 }
 
 .ewqm-sheet-body h1 {

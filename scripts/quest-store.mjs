@@ -8,6 +8,9 @@ const PRIVATE_ARCHIVE_FLAG = "privateArchive";
 const PRIVATE_QUEST_FLAG = "questRecord";
 const QUEST_ID_FLAG = "questId";
 const PLAYER_VOTES_FLAG = "questVotes";
+const ACTIVE_DEADLINE_STATUSES = new Set(["available", "accepted"]);
+const DEADLINE_SECONDS_PER_ROUND = 6;
+const MAX_DEADLINE_SECONDS = 7 * 24 * 60 * 60;
 
 const VOTER_ROLE_MINIMUM = CONST.USER_ROLES.PLAYER;
 const VOTER_ROLE_LIMIT = CONST.USER_ROLES.ASSISTANT;
@@ -176,6 +179,17 @@ export async function saveDraft(questId, fields) {
   const categoryLabel = cleanText(fields.categoryLabel || existing?.categoryLabel, 80);
   const urgencyId = cleanText(fields.urgencyId || existing?.urgencyId, 40);
   const urgencyLabel = cleanText(fields.urgencyLabel || existing?.urgencyLabel, 40);
+  const deadlineSeconds = readDeadlineSeconds(fields, existing);
+  const deadlineReason = cleanText(fields.deadlineReason ?? existing?.deadlineReason ?? "", 240);
+  const previousDeadlineSeconds = Math.max(0, Math.trunc(Number(existing?.deadlineSeconds ?? existing?.deadline?.totalSeconds) || 0));
+  const deadlineWasChanged = deadlineSeconds !== previousDeadlineSeconds;
+  const deadline = deadlineSeconds <= 0
+    ? null
+    : deadlineWasChanged
+      ? (existing?.status === "draft" ? null : createDeadline(deadlineSeconds, getCurrentClockMode()))
+      : existing?.deadline
+        ? foundry.utils.deepClone(existing.deadline)
+        : (existing && existing.status !== "draft" ? createDeadline(deadlineSeconds, getCurrentClockMode()) : null);
   const rewardCandidate = fields.rewardCopper ?? existing?.rewardCopper;
   const rewardCopper = rewardCandidate !== null
     && rewardCandidate !== undefined
@@ -188,7 +202,7 @@ export async function saveDraft(questId, fields) {
     ? foundry.utils.deepClone(fields.generationMetadata)
     : existing?.generationMetadata ?? null;
   const record = existing
-    ? { ...existing, title, description, clerkNote, gmNotes, categoryId, categoryLabel, urgencyId, urgencyLabel, rewardCopper, generationMetadata, updatedAt: now }
+    ? { ...existing, title, description, clerkNote, gmNotes, categoryId, categoryLabel, urgencyId, urgencyLabel, rewardCopper, deadlineSeconds, deadlineReason, deadline, generationMetadata, updatedAt: now }
     : {
         id: foundry.utils.randomID(),
         title,
@@ -200,6 +214,9 @@ export async function saveDraft(questId, fields) {
         urgencyId,
         urgencyLabel,
         rewardCopper,
+        deadlineSeconds,
+        deadlineReason,
+        deadline,
         generationMetadata,
         status: "draft",
         voteRoundId: null,
@@ -220,6 +237,7 @@ export async function publishQuest(questId) {
   record.status = "available";
   record.participantActorIds = readPartyRosterIds();
   record.voteRoundId = foundry.utils.randomID();
+  record.deadline = resumeDeadline(record.deadlineSeconds, record.deadline);
   record.updatedAt = Date.now();
   await persistPrivateQuest(record);
   await syncPublicQuests();
@@ -230,6 +248,7 @@ export async function closeQuest(questId) {
   requireGM();
   const record = await getPrivateQuest(questId);
   if (!record) throw new Error("That quest could not be found.");
+  stopDeadline(record);
   record.status = "closed";
   record.updatedAt = Date.now();
   await persistPrivateQuest(record);
@@ -257,6 +276,7 @@ export async function reopenQuest(questId) {
   record.status = "available";
   record.participantActorIds = readPartyRosterIds();
   record.voteRoundId = foundry.utils.randomID();
+  record.deadline = resumeDeadline(record.deadlineSeconds, record.deadline);
   record.updatedAt = Date.now();
   await persistPrivateQuest(record);
   await syncPublicQuests();
@@ -288,6 +308,7 @@ export async function resolveQuestOutcome(questId, outcome) {
     results.push({ actor, ...result });
   }
 
+  stopDeadline(record);
   record.status = outcome;
   record.resolvedAt = Date.now();
   record.guildExperienceOutcome = {
@@ -331,12 +352,107 @@ export async function resolvePartyVotes() {
     const result = getVoteSummary(quest);
     if (!result.outcome) continue;
     quest.status = result.outcome;
+    if (result.outcome === "declined") stopDeadline(quest);
     quest.updatedAt = Date.now();
     await persistPrivateQuest(quest);
     changed = true;
   }
 
   if (changed) await syncPublicQuests();
+}
+
+/** Persist mode transitions so unpaused wall-clock deadlines pause and resume consistently. */
+export async function syncQuestDeadlineClock({
+  paused = Boolean(game.paused),
+  combatActive = Boolean(game.combat?.started),
+  countRealtimeElapsed = true
+} = {}) {
+  requireGM();
+  const now = Date.now();
+  const nextMode = paused ? "paused" : (combatActive ? "rounds" : "realtime");
+  const quests = await getPrivateQuests();
+  let changed = false;
+
+  for (const quest of quests) {
+    if (!ACTIVE_DEADLINE_STATUSES.has(quest.status) || !quest.deadline) continue;
+    const remaining = getDeadlineRemainingSeconds(quest.deadline, now, countRealtimeElapsed);
+    quest.deadline.remainingSeconds = remaining;
+    quest.deadline.updatedAt = now;
+    quest.deadline.clockMode = nextMode;
+    if (remaining <= 0) quest.deadline.expiredAt ??= now;
+    changed = true;
+    await persistPrivateQuest(quest);
+  }
+
+  if (changed) await syncPublicQuests();
+}
+
+/** Decrement active deadlines by six seconds for each forward combat round. */
+export async function advanceQuestDeadlinesByRounds(roundCount) {
+  requireGM();
+  const rounds = Math.max(0, Math.trunc(Number(roundCount) || 0));
+  if (!rounds) return;
+  const now = Date.now();
+  const quests = await getPrivateQuests();
+  let changed = false;
+
+  for (const quest of quests) {
+    if (!ACTIVE_DEADLINE_STATUSES.has(quest.status) || !quest.deadline) continue;
+    const deadline = quest.deadline;
+    if (deadline.expiredAt || Number(deadline.remainingSeconds) <= 0) continue;
+    if (game.paused) {
+      deadline.clockMode = "paused";
+      deadline.updatedAt = now;
+      await persistPrivateQuest(quest);
+      changed = true;
+      continue;
+    }
+
+    let remaining = getDeadlineRemainingSeconds(deadline, now, true);
+    remaining = Math.max(0, remaining - rounds * DEADLINE_SECONDS_PER_ROUND);
+    deadline.remainingSeconds = remaining;
+    deadline.updatedAt = now;
+    deadline.clockMode = "rounds";
+    if (remaining <= 0) deadline.expiredAt ??= now;
+    await persistPrivateQuest(quest);
+    changed = true;
+  }
+
+  if (changed) await syncPublicQuests();
+}
+
+export function getQuestDeadlineDisplay(quest, { now = Date.now(), paused = Boolean(game.paused) } = {}) {
+  const configuredSeconds = Math.max(0, Math.trunc(Number(quest?.deadlineSeconds ?? quest?.deadline?.totalSeconds) || 0));
+  if (!configuredSeconds) return { hasDeadline: false };
+
+  const deadline = quest?.deadline;
+  const mode = deadline?.clockMode ?? (quest?.status === "draft" ? "draft" : "stopped");
+  const remainingSeconds = deadline
+    ? getDeadlineRemainingSeconds(deadline, now, !paused)
+    : configuredSeconds;
+  const deadlineRemainingSeconds = Math.max(0, Math.ceil(remainingSeconds));
+  const deadlineUpdatedAt = Math.max(0, Number(deadline?.updatedAt) || now);
+  const deadlineState = deadlineRemainingSeconds <= 0
+    ? "expired"
+    : mode === "draft"
+      ? "draft"
+      : mode === "stopped"
+        ? "stopped"
+        : mode === "paused" || paused
+          ? "paused"
+          : mode === "rounds"
+            ? "rounds"
+            : "realtime";
+
+  return {
+    hasDeadline: true,
+    deadlineReason: String(quest?.deadlineReason ?? ""),
+    deadlineRemainingSeconds,
+    deadlineUpdatedAt,
+    deadlineClockMode: mode,
+    deadlineState,
+    deadlineLabel: formatDeadlineLabel(deadlineState, deadlineRemainingSeconds)
+  };
 }
 
 async function persistPrivateQuest(record) {
@@ -393,6 +509,9 @@ async function syncPublicQuests() {
       rewardCopper: quest.rewardCopper !== null && quest.rewardCopper !== undefined && Number.isFinite(Number(quest.rewardCopper))
         ? Number(quest.rewardCopper)
         : null,
+      deadlineSeconds: Math.max(0, Math.trunc(Number(quest.deadlineSeconds ?? quest.deadline?.totalSeconds) || 0)),
+      deadlineReason: quest.deadlineReason ?? "",
+      deadline: quest.deadline ? foundry.utils.deepClone(quest.deadline) : null,
       status: quest.status,
       voteRoundId: quest.voteRoundId,
       createdAt: quest.createdAt,
@@ -407,6 +526,103 @@ function requireGM() {
 
 function cleanText(value, maximumLength) {
   return String(value ?? "").trim().slice(0, maximumLength);
+}
+
+function readDeadlineSeconds(fields, existing) {
+  if (Object.hasOwn(fields, "deadlineHours")) {
+    const hours = Number(fields.deadlineHours);
+    if (!Number.isFinite(hours) || hours < 0 || hours > MAX_DEADLINE_SECONDS / 3600) {
+      throw new Error("The time limit must be between 0 and 168 hours.");
+    }
+    return Math.round(hours * 3600);
+  }
+
+  const source = fields.deadlineSeconds
+    ?? fields.timeLimitSeconds
+    ?? existing?.deadlineSeconds
+    ?? existing?.deadline?.totalSeconds
+    ?? 0;
+  const seconds = Number(source);
+  if (!Number.isFinite(seconds) || seconds < 0 || seconds > MAX_DEADLINE_SECONDS) {
+    throw new Error("The time limit must be between 0 and 168 hours.");
+  }
+  return Math.trunc(seconds);
+}
+
+function createDeadline(totalSeconds, clockMode = "stopped") {
+  const total = Math.max(0, Math.trunc(Number(totalSeconds) || 0));
+  if (!total) return null;
+  const now = Date.now();
+  return {
+    totalSeconds: total,
+    remainingSeconds: total,
+    updatedAt: now,
+    clockMode,
+    expiredAt: null
+  };
+}
+
+function resumeDeadline(totalSeconds, existing) {
+  const total = Math.max(0, Math.trunc(Number(totalSeconds) || 0));
+  if (!total) return null;
+  const now = Date.now();
+  const remaining = existing
+    ? Math.min(total, getDeadlineRemainingSeconds(existing, now, !game.paused))
+    : total;
+  const deadline = existing ? foundry.utils.deepClone(existing) : createDeadline(total);
+  deadline.totalSeconds = total;
+  deadline.remainingSeconds = remaining;
+  deadline.updatedAt = now;
+  deadline.clockMode = remaining > 0 ? getCurrentClockMode() : "stopped";
+  if (remaining <= 0) deadline.expiredAt ??= now;
+  return deadline;
+}
+
+function stopDeadline(quest) {
+  if (!quest?.deadline) return;
+  const now = Date.now();
+  const remaining = getDeadlineRemainingSeconds(quest.deadline, now, !game.paused);
+  quest.deadline.remainingSeconds = remaining;
+  quest.deadline.updatedAt = now;
+  quest.deadline.clockMode = "stopped";
+  if (remaining <= 0) quest.deadline.expiredAt ??= now;
+}
+
+function getDeadlineRemainingSeconds(deadline, now, countRealtimeElapsed) {
+  const stored = Math.max(0, Number(deadline?.remainingSeconds) || 0);
+  if (deadline?.clockMode !== "realtime" || !countRealtimeElapsed) return stored;
+  const updatedAt = Math.max(0, Number(deadline.updatedAt) || now);
+  const elapsed = Math.max(0, (now - updatedAt) / 1000);
+  return Math.max(0, stored - elapsed);
+}
+
+function getCurrentClockMode() {
+  if (game.paused) return "paused";
+  return game.combat?.started ? "rounds" : "realtime";
+}
+
+function formatDeadlineLabel(state, remainingSeconds) {
+  if (state === "expired") return "Time limit elapsed";
+  if (state === "draft") return "Starts when published · " + formatDuration(remainingSeconds) + " limit";
+  const prefix = state === "paused"
+    ? "Paused · "
+    : state === "stopped"
+      ? "Stopped · "
+      : state === "rounds"
+        ? "Combat rounds · "
+        : "Unpaused time · ";
+  return prefix + formatDuration(remainingSeconds);
+}
+
+function formatDuration(totalSeconds) {
+  const seconds = Math.max(0, Math.ceil(Number(totalSeconds) || 0));
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainder = seconds % 60;
+  if (days) return days + "d " + String(hours).padStart(2, "0") + "h";
+  if (hours) return String(hours).padStart(2, "0") + ":" + String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
+  return String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
 }
 
 function readPartyRosterIds() {
@@ -432,3 +648,4 @@ function getCharacterLevel(actor) {
     : Number(actor.system?.details?.level);
   return Number.isInteger(level) ? level : null;
 }
+

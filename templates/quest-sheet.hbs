@@ -10,6 +10,14 @@
             {{#if createdLabel}}<time>Posted: {{createdLabel}}</time>{{/if}}
           </div>
 
+          {{#if hasDeadline}}
+            <section class="ewqm-sheet-deadline">
+              <h2>Time limit</h2>
+              {{#if deadlineReason}}<p data-ewqm-deadline-reason>{{deadlineReason}}</p>{{/if}}
+              <time data-ewqm-deadline data-deadline-quest-id="{{id}}" data-deadline-remaining="{{deadlineRemainingSeconds}}" data-deadline-updated-at="{{deadlineUpdatedAt}}" data-deadline-clock-mode="{{deadlineClockMode}}" data-deadline-state="{{deadlineState}}">{{deadlineLabel}}</time>
+            </section>
+          {{/if}}
+
           <h1>{{title}}</h1>
 
           <section class="ewqm-sheet-section">
@@ -79,3 +87,4 @@
     </article>
   {{/if}}
 </section>
+
